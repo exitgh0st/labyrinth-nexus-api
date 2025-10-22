@@ -17,7 +17,14 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "liquibase-update-dev": "set NODE_ENV=development&&cd db&&node liquibase-update.js",
+    "liquibase-update-prod": "set NODE_ENV=production&&cd db&&node liquibase-update.js",
+    "liquibase-rollback-dev": "set NODE_ENV=development&&cd db&&node liquibase-rollback.js",
+    "liquibase-rollback-prod": "set NODE_ENV=production&&cd db&&node liquibase-rollback.js",
+    "prisma-generate": "npx prisma generate --schema=src/prisma/schema.prisma",
+    "prisma-db-pull": "npx prisma db pull --schema=src/prisma/schema.prisma",
+    "db:setup": "npm run liquibase-update-dev && npm run prisma-db-pull && npm run prisma-generate"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
