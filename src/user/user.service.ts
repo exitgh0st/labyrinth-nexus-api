@@ -1,26 +1,72 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { PrismaService } from 'src/prisma.service';
+import { User, Prisma } from 'generated/prisma';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(private prisma: PrismaService) {}
+
+  /**
+   * Helper function to exclude the password_hash field from a user object.
+   * @param user The user object returned from the database.
+   * @returns The user object without the password_hash field.
+   */
+  excludePasswordHash(user: User): Omit<User, 'password_hash'> {
+    const { password_hash, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async findAll(params?: {
+    skip?: number;
+    take?: number;
+    role?: string;
+    is_active?: boolean;
+  }): Promise<Partial<User>[]> {
+    const { skip = 0, take = 10, role, is_active } = params || {};
+    
+    return this.prisma.user.findMany({
+      skip,
+      take,
+      where: {
+        ...(role && { role }),
+        ...(is_active !== undefined && { is_active }),
+      },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        is_active: true,
+        created_at: true,
+        updated_at: true
+      },
+      orderBy: { created_at: 'desc' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(
+    userWhereUniqueInput: Prisma.UserWhereUniqueInput,
+  ): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: userWhereUniqueInput,
+    });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async create(data: Prisma.UserCreateInput): Promise<User> {
+    return this.prisma.user.create({
+      data,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async update(where: Prisma.UserWhereUniqueInput, data: Prisma.UserUpdateInput): Promise<User> {
+    return this.prisma.user.update({
+      data,
+      where,
+    });
+  }
+
+  async delete(where: Prisma.UserWhereUniqueInput): Promise<User> {
+    return this.prisma.user.delete({
+      where,
+    });
   }
 }
