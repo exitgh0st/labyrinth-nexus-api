@@ -18,13 +18,12 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "liquibase-update-dev": "set NODE_ENV=development&&cd db&&node liquibase-update.js",
-    "liquibase-update-prod": "set NODE_ENV=production&&cd db&&node liquibase-update.js",
-    "liquibase-rollback-dev": "set NODE_ENV=development&&cd db&&node liquibase-rollback.js",
-    "liquibase-rollback-prod": "set NODE_ENV=production&&cd db&&node liquibase-rollback.js",
-    "prisma-generate": "npx prisma generate --schema=src/prisma/schema.prisma",
-    "prisma-db-pull": "npx prisma db pull --schema=src/prisma/schema.prisma",
-    "db:setup": "npm run liquibase-update-dev && npm run prisma-db-pull && npm run prisma-generate"
+    "liquibase:update-dev": "set NODE_ENV=development&&cd db&&node liquibase-update.js",
+    "liquibase:update-prod": "set NODE_ENV=production&&cd db&&node db/liquibase-update.js",
+    "liquibase:rollback-dev": "set NODE_ENV=development&&cd db&&node db/liquibase-rollback.js",
+    "liquibase:rollback-prod": "set NODE_ENV=production&&cd db&&node db/liquibase-rollback.js",
+    "prisma:db-pull": "dotenv -e .env.development.local && prisma db pull",
+    "prisma:generate": "npx prisma generate"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -48,6 +47,7 @@
     "@types/node": "^22.10.7",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.2",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
