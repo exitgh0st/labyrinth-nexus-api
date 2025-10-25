@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { HttpBearerStrategy } from './strategies/http-bearer.strategy';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from 'src/shared/services/prisma.service';
 import { SessionModule } from 'src/session/session.module';
 import { UserService } from 'src/user/user.service';
 import { SessionService } from 'src/session/session.service';

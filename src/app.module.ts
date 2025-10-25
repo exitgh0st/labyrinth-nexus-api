@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from './shared/services/prisma.service';
 import { APP_GUARD } from '@nestjs/core';
 import { BearerAuthGuard } from './auth/guards/bearer-auth.guard';
 import { ConfigModule } from '@nestjs/config';
