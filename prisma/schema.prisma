@@ -13,9 +13,32 @@ model User {
   username      String    @unique @db.VarChar(100)
   password_hash String    @db.VarChar(255)
   role          String    @default("USER") @db.VarChar(50)
-  is_active     Boolean?  @default(true)
-  created_at    DateTime? @default(now()) @db.Timestamp(6)
-  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @default(now()) @db.Timestamp(6)
+  session       Session[]
 
   @@map("user")
+}
+
+model Session {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  token         String   @unique @db.VarChar(500)
+  refresh_token String   @unique @db.VarChar(500)
+  ip_address    String?  @db.VarChar(45)
+  user_agent    String?  @db.VarChar(500)
+  expires_at    DateTime @db.Timestamp(6)
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+  updated_at    DateTime @default(now()) @db.Timestamp(6)
+  last_used_at  DateTime @default(now()) @db.Timestamp(6)
+  is_revoked    Boolean  @default(false)
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_session_user_id")
+
+  @@index([expires_at], map: "idx_session_expires_at")
+  @@index([refresh_token], map: "idx_session_refresh_token")
+  @@index([token], map: "idx_session_token")
+  @@index([user_id], map: "idx_session_user_id")
+
+  @@map("session")
 }
