@@ -1,52 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { User, Prisma } from 'generated/prisma';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { FindAllUsersDto } from './dto/find-all-users.dto';
+import { safeUserSelect } from './selects/safe-user.select';
+import { Prisma, User } from 'generated/prisma';
 
-export type SafeUser = Omit<User, 'password_hash'>;
+export type SafeUser = Prisma.UserGetPayload<{
+  select: typeof safeUserSelect;
+}>;
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
-
-  private readonly safeUserSelect: Prisma.UserSelect = {
-    id: true,
-    username: true,
-    role: true,
-    is_active: true,
-    created_at: true,
-    updated_at: true,
-    password_hash: false, // explicitly exclude
-  };
-
-  async findAll(params?: {
-    skip?: number;
-    take?: number;
-    role?: string;
-    is_active?: boolean;
-  }): Promise<SafeUser[]> {
-    const { skip = 0, take = 10, role, is_active } = params || {};
-    
-    return this.prisma.user.findMany({
-      skip,
-      take,
-      where: {
-        ...(role && { role }),
-        ...(is_active !== undefined && { is_active }),
-      },
-      select: this.safeUserSelect,
-      orderBy: { created_at: 'desc' },
-    });
-  }
-
-  async findOne(id: number): Promise<SafeUser | null>  {
-    return this.prisma.user.findUnique({
-      where: { id },
-      select: this.safeUserSelect
-    });
-  }
 
   async create(createUserDto: CreateUserDto): Promise<SafeUser> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
@@ -58,7 +25,36 @@ export class UserService {
         role: createUserDto.role,
         is_active: createUserDto.is_active ?? true,
       },
-      select: this.safeUserSelect
+      select: safeUserSelect
+    });
+  }
+
+  async findAll(params?: FindAllUsersDto): Promise<SafeUser[]> {
+    const { skip = 0, take = 10, role, is_active } = params || {};
+    
+    return this.prisma.user.findMany({
+      skip,
+      take,
+      where: {
+        ...(role && { role }),
+        ...(is_active !== undefined && { is_active }),
+      },
+      select: safeUserSelect,
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  async findOne(id: number): Promise<SafeUser | null>  {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: safeUserSelect
+    });
+  }
+
+  // Should only be used for auth service
+  async findByUsername(username: string): Promise<User | null>  {
+    return this.prisma.user.findUnique({
+      where: { username }
     });
   }
 
@@ -66,7 +62,7 @@ export class UserService {
     return this.prisma.user.update({
       data: updateUserDto,
       where: { id },
-      select: this.safeUserSelect
+      select: safeUserSelect
     });
   }
 
@@ -76,14 +72,14 @@ export class UserService {
     return this.prisma.user.update({
       where: { id },
       data: { password_hash: hashedPassword },
-      select: this.safeUserSelect,
+      select: safeUserSelect,
     });
   }
 
   async delete(id: number): Promise<SafeUser> {
     return this.prisma.user.delete({
       where: { id },
-      select: this.safeUserSelect
+      select: safeUserSelect
     });
   }
 }
