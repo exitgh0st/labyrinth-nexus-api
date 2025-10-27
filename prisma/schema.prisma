@@ -22,23 +22,22 @@ model User {
 }
 
 model Session {
-  id            Int      @id @default(autoincrement())
-  user_id       Int
-  token         String   @unique @db.VarChar(500)
-  refresh_token String   @unique @db.VarChar(500)
-  ip_address    String?  @db.VarChar(45)
-  user_agent    String?  @db.VarChar(500)
-  expires_at    DateTime @db.Timestamp(6)
-  created_at    DateTime @default(now()) @db.Timestamp(6)
-  updated_at    DateTime @default(now()) @db.Timestamp(6)
-  last_used_at  DateTime @default(now()) @db.Timestamp(6)
-  is_revoked    Boolean  @default(false)
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_session_user_id")
+  id                  Int       @id @default(autoincrement())
+  user_id             Int
+  session_id          String    @unique @db.VarChar(255)
+  refresh_token_hash  String    @unique @db.VarChar(255)
+  ip_address          String?   @db.VarChar(45)
+  user_agent          String?
+  is_revoked          Boolean   @default(false)
+  expires_at          DateTime  @db.Timestamp(6)
+  previous_session_id Int?
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
+  updated_at          DateTime  @default(now()) @db.Timestamp(6)
+  last_used_at        DateTime? @db.Timestamp(6)
+  user                User      @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_session_user_id")
 
-  @@index([expires_at], map: "idx_session_expires_at")
-  @@index([refresh_token], map: "idx_session_refresh_token")
-  @@index([token], map: "idx_session_token")
-  @@index([user_id], map: "idx_session_user_id")
-
+  @@index([refresh_token_hash], map: "idx_session_refresh_token_hash")
+  @@index([session_id], map: "idx_session_session_id")
+  @@index([user_id, is_revoked, expires_at], map: "idx_session_user_revoked_expires")
   @@map("session")
 }
