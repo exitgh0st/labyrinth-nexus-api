@@ -4,11 +4,11 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { HttpBearerStrategy } from './strategies/http-bearer.strategy';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { SessionModule } from 'src/session/session.module';
 import { UserService } from 'src/user/user.service';
 import { SessionService } from 'src/session/session.service';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { SessionService } from 'src/session/session.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, HttpBearerStrategy, PrismaService, UserService, SessionService],
+  providers: [AuthService, JwtStrategy, PrismaService, UserService, SessionService],
   exports: [AuthService],
 })
 export class AuthModule {}
