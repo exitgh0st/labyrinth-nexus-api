@@ -51,7 +51,14 @@ export class UserService {
     });
   }
 
-  // Should only be used for auth service
+  async findById(userId: number): Promise<SafeUser | null>  {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: safeUserSelect
+    });
+  }
+
+  // Should only be used by Auth Service
   async findByUsername(username: string): Promise<User | null>  {
     return this.prisma.user.findUnique({
       where: { username }
