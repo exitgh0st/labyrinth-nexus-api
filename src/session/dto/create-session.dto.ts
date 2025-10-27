@@ -7,11 +7,11 @@ export class CreateSessionDto {
 
     @IsString()
     @IsNotEmpty()
-    token: string;
+    session_id: string;
 
     @IsString()
     @IsNotEmpty()
-    refresh_token: string;
+    refresh_token_hash: string;
 
     @IsOptional()
     @IsString()
@@ -24,5 +24,8 @@ export class CreateSessionDto {
     @Type(() => Date)
     @IsDate()
     expires_at: Date;
-}
 
+    @IsOptional()
+    @IsInt()
+    previous_session_id?: number;
+}

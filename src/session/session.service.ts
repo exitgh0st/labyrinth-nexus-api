@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { Prisma } from 'generated/prisma';
 import { CreateSessionDto } from './dto/create-session.dto';
-import { FindAllSessionsDto } from './dto/find-all-sessions.dto';
 import { safeSessionSelect } from './selects/safe-session.select';
+import { FindAllSessionsDto } from './dto/find-all-sessions.dto';
 
 export type SafeSession = Prisma.SessionGetPayload<{
     select: typeof safeSessionSelect;
@@ -11,11 +11,13 @@ export type SafeSession = Prisma.SessionGetPayload<{
 
 @Injectable()
 export class SessionService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+    ) { }
 
-    async create(data: CreateSessionDto): Promise<SafeSession> {
+    async create(dto: CreateSessionDto): Promise<SafeSession> {
         return this.prisma.session.create({
-            data,
+            data: dto,
             select: safeSessionSelect
         });
     }
@@ -40,70 +42,101 @@ export class SessionService {
         });
     }
 
-    async findByToken(token: string): Promise<SafeSession | null> {
-        return this.prisma.session.findUnique({
-            where: { token },
-            select: safeSessionSelect
-        });
-    }
-
-    async findByRefreshToken(refreshToken: string): Promise<SafeSession | null> {
-        return this.prisma.session.findUnique({
-            where: { refresh_token: refreshToken },
-            select: safeSessionSelect
-        });
-    }
-
-    async updateLastUsed(id: number): Promise<void> {
-        await this.prisma.session.update({
+    async findById(id: number): Promise<SafeSession | null> {
+        const session = await this.prisma.session.findUnique({
             where: { id },
-            data: { last_used_at: new Date() }
-        });
-    }
-
-    async revokeSession(id: number): Promise<SafeSession> {
-        return this.prisma.session.update({
-            where: { id },
-            data: { is_revoked: true },
             select: safeSessionSelect,
         });
+        return session;
     }
 
-    async revokeAllUserSessions(userId: number): Promise<number> {
-        const result = await this.prisma.session.updateMany({
+    async findByRefreshTokenHash(tokenHash: string): Promise<SafeSession | null> {
+        const session = await this.prisma.session.findFirst({
+            where: { refresh_token_hash: tokenHash },
+            select: safeSessionSelect,
+        });
+        return session;
+    }
+
+    async findBySessionId(sessionId: string): Promise<SafeSession | null> {
+        const session = await this.prisma.session.findFirst({
+            where: { session_id: sessionId },
+            select: safeSessionSelect,
+        });
+        return session;
+    }
+
+    async findActiveByUserId(userId: number): Promise<SafeSession[]> {
+        const now = new Date();
+        const sessions = await this.prisma.session.findMany({
             where: {
                 user_id: userId,
                 is_revoked: false,
+                expires_at: { gt: now },
             },
-            data: { is_revoked: true },
-        });
-        return result.count;
-    }
-
-    async deleteSession(id: number): Promise<SafeSession> {
-        return this.prisma.session.delete({
-            where: { id },
             select: safeSessionSelect,
+            orderBy: { created_at: 'desc' },
+        });
+        return sessions;
+    }
+
+    async revokeSession(sessionId: number): Promise<void> {
+        await this.prisma.session.update({
+            where: { id: sessionId },
+            data: {
+                is_revoked: true,
+                updated_at: new Date(),
+            },
         });
     }
 
-    async deleteExpiredSessions(): Promise<number> {
-        const result = await this.prisma.session.deleteMany({
-            where: {
-                expires_at: { lt: new Date() },
+    async revokeAllUserSessions(userId: number): Promise<void> {
+        await this.prisma.session.updateMany({
+            where: { user_id: userId, is_revoked: false },
+            data: {
+                is_revoked: true,
+                updated_at: new Date(),
             },
+        });
+    }
+
+    async updateLastUsed(sessionId: number): Promise<void> {
+        await this.prisma.session.update({
+            where: { id: sessionId },
+            data: {
+                last_used_at: new Date(),
+            },
+        });
+    }
+
+    async deleteSession(sessionId: number): Promise<void> {
+        await this.prisma.session.delete({
+            where: { id: sessionId },
+        });
+    }
+
+    /**
+     * Clean up expired sessions (run as a cron job)
+     */
+    async cleanupExpiredSessions(): Promise<number> {
+        const now = new Date();
+        const result = await this.prisma.session.deleteMany({
+            where: { expires_at: { lt: now } },
         });
         return result.count;
     }
 
-    async deleteRevokedSessions(olderThanDays: number = 30): Promise<number> {
+    /**
+     * Clean up old revoked sessions (run as a cron job)
+     */
+    async cleanupRevokedSessions(daysOld: number): Promise<number> {
         const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+        cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
         const result = await this.prisma.session.deleteMany({
             where: {
                 is_revoked: true,
-                created_at: { lt: cutoffDate },
+                updated_at: { lt: cutoffDate },
             },
         });
         return result.count;

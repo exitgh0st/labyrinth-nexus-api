@@ -12,12 +12,12 @@ import {
   } from '@nestjs/common';
   import { SessionService } from './session.service';
   import { FindAllSessionsDto } from './dto/find-all-sessions.dto';
-  import { BearerAuthGuard } from 'src/auth/guards/bearer-auth.guard';
+  import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
   import { RolesGuard } from 'src/auth/guards/roles.guard';
   import { Roles } from 'src/auth/decorators/roles.decorator';
   
   @Controller('sessions')
-  @UseGuards(BearerAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN') // Only admins can manage sessions
   export class SessionController {
     constructor(private readonly sessionService: SessionService) {}
@@ -45,13 +45,13 @@ import {
   
     @Delete('cleanup/expired')
     @HttpCode(HttpStatus.OK)
-    deleteExpiredSessions() {
-      return this.sessionService.deleteExpiredSessions();
+    cleanupExpiredSessions() {
+      return this.sessionService.cleanupExpiredSessions();
     }
   
     @Delete('cleanup/revoked')
     @HttpCode(HttpStatus.OK)
-    deleteRevokedSessions(@Query('days', ParseIntPipe) days: number = 30) {
-      return this.sessionService.deleteRevokedSessions(days);
+    cleanupRevokedSessions(@Query('days', ParseIntPipe) days: number = 30) {
+      return this.sessionService.cleanupRevokedSessions(days);
     }
   }
