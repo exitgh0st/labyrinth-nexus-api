@@ -19,11 +19,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule, UserModule, SessionModule],
   controllers: [AppController],
   providers: [AppService,
-    PrismaService,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard, // Apply bearer auth globally
-    }
+    PrismaService
   ],
 })
 export class AppModule {}
