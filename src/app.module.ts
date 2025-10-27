@@ -6,7 +6,7 @@ import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
 import { PrismaService } from './shared/services/prisma.service';
 import { APP_GUARD } from '@nestjs/core';
-import { BearerAuthGuard } from './auth/guards/bearer-auth.guard';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -22,7 +22,7 @@ import { ConfigModule } from '@nestjs/config';
     PrismaService,
     {
       provide: APP_GUARD,
-      useClass: BearerAuthGuard, // Apply bearer auth globally
+      useClass: JwtAuthGuard, // Apply bearer auth globally
     }
   ],
 })
