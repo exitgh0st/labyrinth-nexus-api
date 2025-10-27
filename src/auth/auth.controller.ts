@@ -2,105 +2,119 @@ import {
     Controller,
     Post,
     Body,
-    UseGuards,
     Req,
+    Res,
+    UseGuards,
+    Get,
     HttpCode,
     HttpStatus,
-    Get,
-    Res,
     UnauthorizedException,
+    Param,
+    ParseIntPipe,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { AuthResponseDto } from './dto/auth-response.dto';
-import { BearerAuthGuard } from './guards/bearer-auth.guard';
-import { Public } from './decorators/public.decorator';
-import type { Request, Response } from 'express'; // Fixed: use 'import type' for Request
-import { CurrentUser } from './decorators/current-user.decorator';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import type { SafeUser } from 'src/user/user.service';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+    constructor(private authService: AuthService) { }
 
-    @Public()
     @Post('login')
     @HttpCode(HttpStatus.OK)
     async login(
         @Body() loginDto: LoginDto,
         @Req() req: Request,
-        @Res({ passthrough: true }) res: Response
-    ): Promise<AuthResponseDto> {
+        @Res({ passthrough: true }) res: Response,
+    ) {
         const ipAddress = req.ip || req.socket.remoteAddress;
-        const userAgent = req.headers['user-agent'];
+        const userAgent = req.get('user-agent');
 
-        const authResponse =  await this.authService.login(loginDto, ipAddress, userAgent);
+        const result = await this.authService.login(
+            loginDto,
+            res,
+            ipAddress,
+            userAgent,
+        );
 
-        this.setRefreshToken(res, authResponse);
+        // Don't send refresh token in response body (it's in httpOnly cookie)
+        const { refresh_token, ...publicResult } = result;
 
-        return {
-            access_token: authResponse.access_token,
-            token_type: authResponse.token_type,
-            expires_in: authResponse.expires_in,
-        };
+        return publicResult;
     }
 
-    @Public()
     @Post('refresh')
     @HttpCode(HttpStatus.OK)
     async refresh(
-        @Body() refreshTokenDto: RefreshTokenDto,
         @Req() req: Request,
-        @Res({ passthrough: true }) res: Response
-    ): Promise<AuthResponseDto> {
-        const refreshToken = req.cookies['refresh_token'];
-        
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const refreshToken = req.cookies?.refresh_token;
+
         if (!refreshToken) {
             throw new UnauthorizedException('Refresh token not found');
         }
 
         const ipAddress = req.ip || req.socket.remoteAddress;
-        const userAgent = req.headers['user-agent'];
+        const userAgent = req.get('user-agent');
 
-        const authResponse = await this.authService.refreshToken(
-            refreshTokenDto.refresh_token,
+        const result = await this.authService.refreshToken(
+            refreshToken,
+            res,
             ipAddress,
             userAgent,
         );
 
-        this.setRefreshToken(res, authResponse);
+        // Don't send refresh token in response body
+        const { refresh_token, ...publicResult } = result;
 
-        return {
-            access_token: authResponse.access_token,
-            token_type: authResponse.token_type,
-            expires_in: authResponse.expires_in
-        }
+        return publicResult;
     }
 
-    setRefreshToken(res: Response, authResponse: AuthResponseDto) {
-        res.cookie('refresh_token', authResponse.refresh_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-            path: '/auth/refresh',
-        });
-    }
-
-    @UseGuards(BearerAuthGuard)
     @Post('logout')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    async logout(@Req() req: Request, @Res({passthrough: true}) res: Response): Promise<void> {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        if (token) {
-            await this.authService.logout(token, res);
-        }
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    async logout(
+        @Req() req: Request,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const refreshToken = req.cookies?.refresh_token;
+        
+        await this.authService.logout(refreshToken, res);
+
+        return { message: 'Logged out successfully' };
     }
 
-    @UseGuards(BearerAuthGuard)
+    @Post('logout-all')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    async logoutAll(
+        @CurrentUser() user: SafeUser,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        await this.authService.logoutAll(user.id, res);
+
+        return { message: 'Logged out from all devices' };
+    }
+
+    @Post(':id/revoke')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    async revokeSession(
+        @CurrentUser() user: SafeUser,
+        @Param('id', ParseIntPipe) sessionId: number,
+    ) {
+        await this.authService.revokeSession(user.id, sessionId);
+
+        return { message: 'Session revoked successfully' };
+    }
+
     @Get('me')
-    getProfile(@CurrentUser() safeUser: SafeUser) {
-        return safeUser;
+    @UseGuards(JwtAuthGuard)
+    async getCurrentUser(@CurrentUser() user: SafeUser) {
+        return user;
     }
 }
