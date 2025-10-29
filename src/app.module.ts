@@ -6,6 +6,8 @@ import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
 import { PrismaService } from './shared/services/prisma.service';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
   imports: [
