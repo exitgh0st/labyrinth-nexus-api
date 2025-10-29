@@ -18,12 +18,14 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import type { SafeUser } from 'src/user/user.service';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { Public } from './decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
 
     @Post('login')
+    @Public()
     @HttpCode(HttpStatus.OK)
     async login(
         @Body() loginDto: LoginDto,
@@ -47,6 +49,7 @@ export class AuthController {
     }
 
     @Post('refresh')
+    @Public()
     @HttpCode(HttpStatus.OK)
     async refresh(
         @Req() req: Request,
@@ -75,7 +78,7 @@ export class AuthController {
     }
 
     @Post('logout')
-    @UseGuards(JwtAuthGuard)
+    @Public()
     @HttpCode(HttpStatus.OK)
     async logout(
         @Req() req: Request,
@@ -89,7 +92,6 @@ export class AuthController {
     }
 
     @Post('logout-all')
-    @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.OK)
     async logoutAll(
         @CurrentUser() user: SafeUser,
@@ -101,7 +103,6 @@ export class AuthController {
     }
 
     @Post(':id/revoke')
-    @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.OK)
     async revokeSession(
         @CurrentUser() user: SafeUser,
@@ -113,7 +114,6 @@ export class AuthController {
     }
 
     @Get('me')
-    @UseGuards(JwtAuthGuard)
     async getCurrentUser(@CurrentUser() user: SafeUser) {
         return user;
     }
