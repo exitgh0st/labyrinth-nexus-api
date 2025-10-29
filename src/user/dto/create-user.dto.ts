@@ -1,11 +1,9 @@
 import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { UpdatePasswordDto } from './update-user-password.dto';
 
-export class CreateUserDto {
+export class CreateUserDto extends UpdatePasswordDto {
   @IsString()
   username: string;
-
-  @IsString()
-  password: string;
 
   @IsString()
   role: string;
