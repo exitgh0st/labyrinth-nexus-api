@@ -45,16 +45,16 @@ export class UserController {
     return this.userService.update(id, updateUserDto);
   }
 
-  @Patch(':id/password') // ✅ Good RESTful nested resource
+  @Patch(':id/password')
   updatePassword(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updatePasswordDto: UpdatePasswordDto, // ✅ Use DTO instead of raw string
+    @Body() updatePasswordDto: UpdatePasswordDto
   ) {
     return this.userService.updatePassword(id, updatePasswordDto.password);
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT) // ✅ 204 for successful deletion
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.userService.delete(id);
   }
