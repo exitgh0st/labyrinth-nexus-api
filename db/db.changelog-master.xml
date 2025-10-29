@@ -6,7 +6,9 @@
 
 
     <include file="migration-scripts/001-create-user-table.xml"/>
-    <include file="migration-scripts/002-seed-user-data.xml" />
+    <include file="migration-scripts/002-create-role-table.xml" />
     <include file="migration-scripts/003-create-session-table.xml" />
+    <include file="migration-scripts/004-seed-role-data.xml" />
+    <include file="migration-scripts/005-seed-user-data.xml" />
 
 </databaseChangeLog>
