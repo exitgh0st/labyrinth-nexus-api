@@ -6,7 +6,7 @@
 
     <changeSet id="002-create-role-table" author="exitgh0st">
         <createTable tableName="role">
-            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+            <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="name" type="VARCHAR(50)">

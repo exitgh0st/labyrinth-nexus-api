@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="006-create-user-role-table" author="exitgh0st">
+        <createTable tableName="user_role">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="granted_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="granted_by" type="UUID"/>
+        </createTable>
+
+        <!-- Foreign Key Constraints -->
+        <addForeignKeyConstraint
+            constraintName="fk_user_role_user_id"
+            baseTableName="user_role"
+            baseColumnNames="user_id"
+            referencedTableName="user"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            onUpdate="CASCADE"/>
+        <addForeignKeyConstraint
+            constraintName="fk_user_role_role_id"
+            baseTableName="user_role"
+            baseColumnNames="role_id"
+            referencedTableName="role"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            onUpdate="CASCADE"/>
+        <addForeignKeyConstraint
+            constraintName="fk_user_role_granted_by"
+            baseTableName="user_role"
+            baseColumnNames="granted_by"
+            referencedTableName="user"
+            referencedColumnNames="id"
+            onDelete="SET NULL"
+            onUpdate="CASCADE"/>
+
+        <!-- Unique Constraint for (user_id, role_id) -->
+        <addUniqueConstraint
+            tableName="user_role"
+            columnNames="user_id, role_id"
+            constraintName="uq_user_role_userid_roleid"/>
+
+        <!-- Indexes -->
+        <createIndex indexName="idx_user_role_user_id" tableName="user_role">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_user_role_role_id" tableName="user_role">
+            <column name="role_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="user_role"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

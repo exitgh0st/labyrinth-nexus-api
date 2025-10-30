@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="007-seed-user-role-data" author="exitgh0st">
+        <sql>
+            INSERT INTO user_role (user_id, role_id, granted_at, granted_by)
+            SELECT 
+                u.id,
+                r.id,
+                TIMESTAMP '2023-01-01 00:00:00',
+                u.id
+            FROM "user" u
+            CROSS JOIN role r
+            WHERE u.email = 'admin@admin.com'
+              AND r.name = 'ADMIN';
+        </sql>
+        
+        <rollback>
+            DELETE FROM user_role 
+            WHERE user_id = (SELECT id FROM "user" WHERE email = 'admin@admin.com')
+              AND role_id = (SELECT id FROM role WHERE name = 'ADMIN');
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
