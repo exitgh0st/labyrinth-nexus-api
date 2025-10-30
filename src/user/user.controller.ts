@@ -33,13 +33,13 @@ export class UserController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.userService.update(id, updateUserDto);
@@ -47,7 +47,7 @@ export class UserController {
 
   @Patch(':id/password')
   updatePassword(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updatePasswordDto: UpdatePasswordDto
   ) {
     return this.userService.updatePassword(id, updatePasswordDto.password);
@@ -55,7 +55,7 @@ export class UserController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id') id: string) {
     return this.userService.delete(id);
   }
 }
