@@ -1,8 +1,9 @@
 import { Prisma } from "generated/prisma";
 
-export const safeUserSelect = {
+export const userSelect = {
     id: true,
     email: true,
+    password_hash: true,
     email_verified: true,
     email_verified_at: true,
     first_name: true,
@@ -18,5 +19,13 @@ export const safeUserSelect = {
     password_changed_at: true,
     created_at: true,
     updated_at: true,
-    password_hash: false, // explicitly exclude
+    userRoles: {
+        select: {
+            role: {
+                select: {
+                    name: true
+                }
+            }
+        }
+    }
 } satisfies Prisma.UserSelect;
