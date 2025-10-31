@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 
 export class CreateSessionDto {
     @IsInt()
-    user_id: number;
+    user_id: string;
 
     @IsString()
     @IsNotEmpty()
