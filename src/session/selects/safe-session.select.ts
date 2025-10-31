@@ -1,5 +1,5 @@
 import { Prisma } from "generated/prisma";
-import { safeUserSelect } from "src/user/selects/safe-user.select";
+import { safeUserSelect } from "src/user/selects/safe-user-select";
 
 export const safeSessionSelect = {
     id: true,
