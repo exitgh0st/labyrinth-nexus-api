@@ -4,8 +4,13 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FindAllUsersDto } from './dto/find-all-users.dto';
-import { safeUserSelect } from './selects/safe-user.select';
-import { Prisma, User } from 'generated/prisma';
+import { userSelect } from './selects/user-select';
+import { Prisma } from 'generated/prisma';
+import { safeUserSelect } from './selects/safe-user-select';
+
+export type User = Prisma.UserGetPayload<{
+  select: typeof userSelect;
+}>;
 
 export type SafeUser = Prisma.UserGetPayload<{
   select: typeof safeUserSelect;
@@ -29,7 +34,7 @@ export class UserService {
   }
 
   async findAll(params?: FindAllUsersDto): Promise<SafeUser[]> {
-    const { skip = 0, take = 10, role_id, is_active } = params || {};
+    const { skip = 0, take = 10, role: role_id, is_active } = params || {};
     
     return this.prisma.user.findMany({
       skip,
@@ -60,7 +65,8 @@ export class UserService {
   // Should only be used by Auth Service
   async findByEmail(email: string): Promise<User | null>  {
     return this.prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: userSelect
     });
   }
 
