@@ -4,7 +4,7 @@ import { PaginationDto } from "src/shared/dto/pagination.dto";
 export class FindAllUsersDto extends PaginationDto {
     @IsOptional()
     @IsString()
-    role_id?: number;
+    role?: string;
 
     @IsOptional()
     @IsBoolean()
