@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Injectable,
     UnauthorizedException,
 } from '@nestjs/common';
@@ -35,34 +36,85 @@ export class AuthService {
     }
 
     /**
-     * Validates user by username and password
+     * Validates user by email and password
      */
-    async validateUser(username: string, password: string): Promise<SafeUser | null> {
-        const user = await this.userService.findByUsername(username);
+    async validateUser(email: string, password: string): Promise<SafeUser | null> {
+        // 1. Validate email format first
+        if (!this.isValidEmail(email)) {
+            throw new BadRequestException('Invalid email format');
+        }
+
+        // 2. Validate password is not empty
+        if (!password || password.trim().length === 0) {
+            throw new BadRequestException('Password is required');
+        }
+
+        // 3. Find user
+        const user = await this.userService.findByEmail(email.toLowerCase().trim());
 
         if (!user) {
-            return null;
+            return null;  // Don't reveal if user exists
         }
 
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-
-        if (!isPasswordValid) {
-            return null;
-        }
-
+        // 4. Check if account is active BEFORE password check
+        // (prevents timing attacks from revealing account status)
         if (!user.is_active) {
             throw new UnauthorizedException('Account is inactive');
         }
 
-        const { password_hash, ...userWithoutPasswordHash } = user;
+        // 5. Check if account is locked
+        if (user.locked_until && user.locked_until > new Date()) {
+            throw new UnauthorizedException('Account is temporarily locked');
+        }
 
-        return userWithoutPasswordHash;
+        // 6. Validate password
+        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+        if (!isPasswordValid) {
+            // Increment failed login attempts
+            await this.handleFailedLogin(user);
+            return null;
+        }
+
+        // 7. Reset failed login attempts and update last login (single query)
+        await this.userService.update(user.id, {
+            failed_login_attempts: 0,
+            locked_until: null,
+            last_login_at: new Date()
+        });
+
+        // 9. Return safe user (without password_hash)
+        const { password_hash, ...safeUser } = user;
+        return safeUser;
+    }
+
+    private isValidEmail(email: string): boolean {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    private async handleFailedLogin(user: SafeUser): Promise<void> {
+        const attempts = (user.failed_login_attempts || 0) + 1;
+
+        const lockDuration = 15 * 60 * 1000; // 15 minutes
+        const maxAttempts = 5;
+
+        if (attempts >= maxAttempts) {
+            await this.userService.update(user.id, {
+                failed_login_attempts: attempts,
+                locked_until: new Date(Date.now() + lockDuration)
+            });
+        } else {
+            await this.userService.update(user.id, {
+                failed_login_attempts: attempts
+            });
+        }
     }
 
     /**
      * Validates user by ID only (for access token validation)
      */
-    async validateUserById(userId: number): Promise<SafeUser | null> {
+    async validateUserById(userId: string): Promise<SafeUser | null> {
         const user = await this.userService.findById(userId);
 
         if (!user) {
@@ -82,7 +134,7 @@ export class AuthService {
         ipAddress?: string,
         userAgent?: string,
     ): Promise<AuthResult> {
-        const user = await this.validateUser(loginDto.username, loginDto.password);
+        const user = await this.validateUser(loginDto.email, loginDto.password);
 
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
@@ -178,7 +230,7 @@ export class AuthService {
     /**
      * Logout from all devices
      */
-    async logoutAll(userId: number, res: Response): Promise<void> {
+    async logoutAll(userId: string, res: Response): Promise<void> {
         await this.sessionService.revokeAllUserSessions(userId);
         res.clearCookie('refresh_token', this.getCookieOptions());
     }
@@ -194,8 +246,7 @@ export class AuthService {
     ): Promise<AuthResult> {
         const payload = {
             sub: user.id,
-            username: user.username,
-            role: user.role,
+            role: user.userRoles.map(userRole => { return userRole.role.name })
         };
 
         // Generate stateless access token (NOT stored in DB)
@@ -289,9 +340,9 @@ export class AuthService {
     /**
      * Revoke a specific session by ID
      */
-    async revokeSession(userId: number, sessionId: number): Promise<void> {
+    async revokeSession(userId: string, sessionId: number): Promise<void> {
         const session = await this.sessionService.findById(sessionId);
-        
+
         if (!session || session.user_id !== userId) {
             throw new UnauthorizedException('Session not found');
         }
