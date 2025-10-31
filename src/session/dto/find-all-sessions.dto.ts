@@ -6,7 +6,7 @@ export class FindAllSessionsDto extends PaginationDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt()
-    user_id?: number;
+    user_id?: string;
 
     @IsOptional()
     @IsBoolean()
