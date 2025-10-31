@@ -9,49 +9,53 @@ datasource db {
 }
 
 model User {
-  id                                   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                                String      @unique @db.VarChar(255)
-  email_verified                       Boolean     @unique @default(false)
-  email_verified_at                    DateTime?   @db.Timestamp(6)
-  password_hash                        String      @db.VarChar(255)
-  first_name                           String?     @db.VarChar(100)
-  last_name                            String?     @db.VarChar(100)
-  display_name                         String?     @db.VarChar(100)
-  avatar_url                           String?     @db.VarChar(500)
-  is_active                            Boolean?    @default(true)
-  is_deleted                           Boolean?    @default(false)
-  deleted_at                           DateTime?   @db.Timestamp(6)
-  last_login_at                        DateTime?   @db.Timestamp(6)
-  failed_login_attempts                Int?        @default(0)
-  locked_until                         DateTime?   @db.Timestamp(6)
-  password_changed_at                  DateTime?   @db.Timestamp(6)
-  created_at                           DateTime    @default(now()) @db.Timestamp(6)
-  updated_at                           DateTime    @default(now()) @db.Timestamp(6)
-  session                              Session[]
-  user_role_user_role_granted_byTouser UserRole[] @relation("user_role_granted_byTouser")
-  user_role_user_role_user_idTouser    UserRole[] @relation("user_role_user_idTouser")
+  id                   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                String      @unique @db.VarChar(255)
+  emailVerified        Boolean     @default(false) @map("email_verified")
+  emailVerifiedAt      DateTime?   @map("email_verified_at") @db.Timestamp(6)
+  passwordHash         String      @map("password_hash") @db.VarChar(255)
+  firstName            String?     @map("first_name") @db.VarChar(100)
+  lastName             String?     @map("last_name") @db.VarChar(100)
+  displayName          String?     @map("display_name") @db.VarChar(100)
+  avatarUrl            String?     @map("avatar_url") @db.VarChar(500)
+  isActive             Boolean     @default(true) @map("is_active")
+  isDeleted            Boolean     @default(false) @map("is_deleted")
+  deletedAt            DateTime?   @map("deleted_at") @db.Timestamp(6)
+  lastLoginAt          DateTime?   @map("last_login_at") @db.Timestamp(6)
+  failedLoginAttempts  Int         @default(0) @map("failed_login_attempts")
+  lockedUntil          DateTime?   @map("locked_until") @db.Timestamp(6)
+  passwordChangedAt    DateTime?   @map("password_changed_at") @db.Timestamp(6)
+  createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime    @default(now()) @map("updated_at") @db.Timestamp(6)
+  
+  // Relations
+  sessions             Session[]
+  userRoles            UserRole[]  @relation("UserRoles")
+  grantedUserRoles     UserRole[]  @relation("GrantedBy")
 
   @@map("user")
 }
 
 model Session {
-  id                  Int       @id @default(autoincrement())
-  user_id             String    @db.Uuid
-  session_id          String    @unique @db.VarChar(255)
-  refresh_token_hash  String    @unique @db.VarChar(255)
-  ip_address          String?   @db.VarChar(45)
-  user_agent          String?
-  is_revoked          Boolean   @default(false)
-  expires_at          DateTime  @db.Timestamp(6)
-  previous_session_id Int?
-  created_at          DateTime  @default(now()) @db.Timestamp(6)
-  updated_at          DateTime  @default(now()) @db.Timestamp(6)
-  last_used_at        DateTime? @db.Timestamp(6)
-  user                User      @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_session_user_id")
+  id                 Int       @id @default(autoincrement())
+  userId             String    @map("user_id") @db.Uuid
+  sessionId          String    @unique @map("session_id") @db.VarChar(255)
+  refreshTokenHash   String    @unique @map("refresh_token_hash") @db.VarChar(255)
+  ipAddress          String?   @map("ip_address") @db.VarChar(45)
+  userAgent          String?   @map("user_agent")
+  isRevoked          Boolean   @default(false) @map("is_revoked")
+  expiresAt          DateTime  @map("expires_at") @db.Timestamp(6)
+  previousSessionId  Int?      @map("previous_session_id")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime  @default(now()) @map("updated_at") @db.Timestamp(6)
+  lastUsedAt         DateTime? @map("last_used_at") @db.Timestamp(6)
+  
+  // Relations
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_session_user_id")
 
-  @@index([refresh_token_hash], map: "idx_session_refresh_token_hash")
-  @@index([session_id], map: "idx_session_session_id")
-  @@index([user_id, is_revoked, expires_at], map: "idx_session_user_revoked_expires")
+  @@index([refreshTokenHash], map: "idx_session_refresh_token_hash")
+  @@index([sessionId], map: "idx_session_session_id")
+  @@index([userId, isRevoked, expiresAt], map: "idx_session_user_revoked_expires")
   @@map("session")
 }
 
@@ -59,27 +63,30 @@ model Role {
   id          Int         @id @default(autoincrement())
   name        String      @unique @db.VarChar(50)
   description String?
-  is_active   Boolean?    @default(true)
-  created_at  DateTime    @default(now()) @db.Timestamp(6)
-  updated_at  DateTime    @default(now()) @db.Timestamp(6)
-  user_role   UserRole[]
+  isActive    Boolean     @default(true) @map("is_active")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime    @default(now()) @map("updated_at") @db.Timestamp(6)
+  
+  // Relations
+  userRoles   UserRole[]
 
   @@map("role")
 }
 
 model UserRole {
-  id                              Int       @id @default(autoincrement())
-  user_id                         String    @db.Uuid
-  role_id                         Int
-  granted_at                      DateTime? @default(now()) @db.Timestamp(6)
-  granted_by                      String?   @db.Uuid
-  user_user_role_granted_byTouser User?     @relation("user_role_granted_byTouser", fields: [granted_by], references: [id], map: "fk_user_role_granted_by")
-  role                            Role      @relation(fields: [role_id], references: [id], onDelete: Cascade, map: "fk_user_role_role_id")
-  user_user_role_user_idTouser    User      @relation("user_role_user_idTouser", fields: [user_id], references: [id], onDelete: Cascade, map: "fk_user_role_user_id")
+  id        Int       @id @default(autoincrement())
+  userId    String    @map("user_id") @db.Uuid
+  roleId    Int       @map("role_id")
+  grantedAt DateTime  @default(now()) @map("granted_at") @db.Timestamp(6)
+  grantedBy String?   @map("granted_by") @db.Uuid
+  
+  // Relations
+  user      User      @relation("UserRoles", fields: [userId], references: [id], onDelete: Cascade, map: "fk_user_role_user_id")
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade, map: "fk_user_role_role_id")
+  grantor   User?     @relation("GrantedBy", fields: [grantedBy], references: [id], map: "fk_user_role_granted_by")
 
-  @@unique([user_id, role_id], map: "uq_user_role_userid_roleid")
-  @@index([role_id], map: "idx_user_role_role_id")
-  @@index([user_id], map: "idx_user_role_user_id")
-
+  @@unique([userId, roleId], map: "uq_user_role_userid_roleid")
+  @@index([roleId], map: "idx_user_role_role_id")
+  @@index([userId], map: "idx_user_role_user_id")
   @@map("user_role")
 }
