@@ -66,7 +66,7 @@ export class SessionService {
         return session;
     }
 
-    async findActiveByUserId(userId: number): Promise<SafeSession[]> {
+    async findActiveByUserId(userId: string): Promise<SafeSession[]> {
         const now = new Date();
         const sessions = await this.prisma.session.findMany({
             where: {
@@ -90,7 +90,7 @@ export class SessionService {
         });
     }
 
-    async revokeAllUserSessions(userId: number): Promise<void> {
+    async revokeAllUserSessions(userId: string): Promise<void> {
         await this.prisma.session.updateMany({
             where: { user_id: userId, is_revoked: false },
             data: {
