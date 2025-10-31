@@ -7,21 +7,21 @@ export class CreateUserDto extends UpdatePasswordDto {
 
   @IsOptional()
   @IsString()
-  first_name?: string;
+  firstName?: string;
 
   @IsOptional()
   @IsString()
-  last_name?: string;
+  lastName?: string;
 
   @IsOptional()
   @IsString()
-  display_name?: string;
+  displayName?: string;
 
   @IsOptional()
   @IsString()
-  avatar_url?: string;
+  avatarUrl?: string;
 
   @IsOptional()
   @IsBoolean()
-  is_active?: boolean;
+  isActive?: boolean;
 }

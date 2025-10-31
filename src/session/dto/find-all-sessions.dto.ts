@@ -6,13 +6,13 @@ export class FindAllSessionsDto extends PaginationDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt()
-    user_id?: string;
+    userId?: string;
 
     @IsOptional()
     @IsBoolean()
-    is_revoked?: boolean;
+    isRevoked?: boolean;
 
     @IsOptional()
     @IsBoolean()
-    include_expired?: boolean;
+    includeExpired?: boolean;
 }

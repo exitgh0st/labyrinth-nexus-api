@@ -42,7 +42,7 @@ export class AuthController {
         );
 
         // Don't send refresh token in response body (it's in httpOnly cookie)
-        const { refresh_token, ...publicResult } = result;
+        const { refreshToken: refresh_token, ...publicResult } = result;
 
         return publicResult;
     }
@@ -71,7 +71,7 @@ export class AuthController {
         );
 
         // Don't send refresh token in response body
-        const { refresh_token, ...publicResult } = result;
+        const { refreshToken: refresh_token, ...publicResult } = result;
 
         return publicResult;
     }

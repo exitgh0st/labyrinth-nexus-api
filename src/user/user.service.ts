@@ -26,7 +26,7 @@ export class UserService {
 
     return this.prisma.user.create({
       data: {
-        password_hash: hashedPassword,
+        passwordHash: hashedPassword,
         ...dtoWithoutPassword
       },
       select: safeUserSelect
@@ -34,18 +34,26 @@ export class UserService {
   }
 
   async findAll(params?: FindAllUsersDto): Promise<SafeUser[]> {
-    const { skip = 0, take = 10, role: role_id, is_active } = params || {};
-    
-    return this.prisma.user.findMany({
-      skip,
-      take,
-      where: {
-        ...(role_id && { role_id }),
-        ...(is_active !== undefined && { is_active }),
-      },
-      select: safeUserSelect,
-      orderBy: { created_at: 'desc' },
-    });
+    const { skip = 0, take = 10, role, isActive } = params || {};
+  
+  return this.prisma.user.findMany({
+    skip,
+    take,
+    where: {
+      ...(role !== undefined && {
+        userRoles: {
+          some: {
+            role: {
+              name: role,
+            },
+          },
+        },
+      }),
+      ...(isActive !== undefined && { isActive }),
+    },
+    select: safeUserSelect,
+    orderBy: { createdAt: 'desc' },
+  });
   }
 
   async findOne(id: string): Promise<SafeUser | null>  {
@@ -83,7 +91,7 @@ export class UserService {
 
     return this.prisma.user.update({
       where: { id },
-      data: { password_hash: hashedPassword },
+      data: { passwordHash: hashedPassword },
       select: safeUserSelect,
     });
   }

@@ -173,7 +173,7 @@ describe('AuthService', () => {
 
       expect(sessionService.findByRefreshToken).toHaveBeenCalledWith('valid_refresh_token');
       expect(sessionService.revokeSession).toHaveBeenCalledWith(1);
-      expect(result.access_token).toBe('new_access_token');
+      expect(result.accessToken).toBe('new_access_token');
     });
 
     it('should throw UnauthorizedException with invalid refresh token', async () => {

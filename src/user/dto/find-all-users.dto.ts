@@ -8,5 +8,5 @@ export class FindAllUsersDto extends PaginationDto {
 
     @IsOptional()
     @IsBoolean()
-    is_active?: boolean;
+    isActive?: boolean;
 }

@@ -3,5 +3,5 @@ import { userSelect } from "./user-select";
 
 export const safeUserSelect = {
     ...userSelect,
-    password_hash: false
+    passwordHash: false
 } satisfies Prisma.UserSelect;

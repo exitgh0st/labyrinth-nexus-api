@@ -33,7 +33,7 @@ import {
     }
   
     @Patch('user/:userId/revoke-all')
-    revokeAllUserSessions(@Param('userId', ParseIntPipe) userId: number) {
+    revokeAllUserSessions(@Param('userId') userId: string) {
       return this.sessionService.revokeAllUserSessions(userId);
     }
   

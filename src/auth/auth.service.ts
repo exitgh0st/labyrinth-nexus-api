@@ -13,6 +13,8 @@ import { SafeUser, UserService } from 'src/user/user.service';
 import type { Response, CookieOptions } from 'express';
 import { AuthResult } from './interfaces/auth-result.interface';
 
+const refreshTokenCookieKey = "refreshToken";
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -58,17 +60,17 @@ export class AuthService {
 
         // 4. Check if account is active BEFORE password check
         // (prevents timing attacks from revealing account status)
-        if (!user.is_active) {
+        if (!user.isActive) {
             throw new UnauthorizedException('Account is inactive');
         }
 
         // 5. Check if account is locked
-        if (user.locked_until && user.locked_until > new Date()) {
+        if (user.lockedUntil && user.lockedUntil > new Date()) {
             throw new UnauthorizedException('Account is temporarily locked');
         }
 
         // 6. Validate password
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+        const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isPasswordValid) {
             // Increment failed login attempts
@@ -78,13 +80,15 @@ export class AuthService {
 
         // 7. Reset failed login attempts and update last login (single query)
         await this.userService.update(user.id, {
-            failed_login_attempts: 0,
-            locked_until: null,
-            last_login_at: new Date()
+            failedLoginAttempts: 0,
+            lockedUntil: null,
+            lastLoginAt: new Date()
         });
 
         // 9. Return safe user (without password_hash)
-        const { password_hash, ...safeUser } = user;
+        // For compatibility, destructure passwordHash, but it may not exist on SafeUser
+        // If it does, exclude it
+        const { passwordHash, ...safeUser } = user as any;
         return safeUser;
     }
 
@@ -94,19 +98,19 @@ export class AuthService {
     }
 
     private async handleFailedLogin(user: SafeUser): Promise<void> {
-        const attempts = (user.failed_login_attempts || 0) + 1;
+        const attempts = (user.failedLoginAttempts || 0) + 1;
 
         const lockDuration = 15 * 60 * 1000; // 15 minutes
         const maxAttempts = 5;
 
         if (attempts >= maxAttempts) {
             await this.userService.update(user.id, {
-                failed_login_attempts: attempts,
-                locked_until: new Date(Date.now() + lockDuration)
+                failedLoginAttempts: attempts,
+                lockedUntil: new Date(Date.now() + lockDuration)
             });
         } else {
             await this.userService.update(user.id, {
-                failed_login_attempts: attempts
+                failedLoginAttempts: attempts
             });
         }
     }
@@ -121,7 +125,7 @@ export class AuthService {
             return null;
         }
 
-        if (!user.is_active) {
+        if (!user.isActive) {
             throw new UnauthorizedException('Account is inactive');
         }
 
@@ -142,7 +146,7 @@ export class AuthService {
 
         const authResult = await this.generateTokens(user, ipAddress, userAgent);
 
-        res.cookie('refresh_token', authResult.refresh_token, this.getCookieOptions());
+        res.cookie(refreshTokenCookieKey, authResult.refreshToken, this.getCookieOptions());
 
         return authResult;
     }
@@ -162,19 +166,19 @@ export class AuthService {
         }
 
         // Check if session exists and is revoked (reuse detection)
-        if (session.is_revoked) {
+        if (session.isRevoked) {
             // This could indicate token theft - revoke all sessions for this user
-            await this.sessionService.revokeAllUserSessions(session.user_id);
+            await this.sessionService.revokeAllUserSessions(session.userId);
             throw new UnauthorizedException(
                 'Token reuse detected. All sessions have been revoked for security.'
             );
         }
 
-        if (session.expires_at < new Date()) {
+        if (session.expiresAt < new Date()) {
             throw new UnauthorizedException('Refresh token expired');
         }
 
-        if (!session.user.is_active) {
+        if (!session.user.isActive) {
             throw new UnauthorizedException('Account is inactive');
         }
 
@@ -191,7 +195,7 @@ export class AuthService {
             // Optional: require re-authentication or send security alert
             // For now, we'll allow it but could add stricter policies
             // TODO: Implement notification service
-            // await this.notificationService.sendSecurityAlert(session.user_id, {
+            // await this.notificationService.sendSecurityAlert(session.userId, {
             //     type: 'suspicious_activity',
             //     ipAddress,
             //     userAgent,
@@ -209,7 +213,7 @@ export class AuthService {
             session!.id // Pass old session ID for audit trail
         );
 
-        res.cookie('refresh_token', authResult.refresh_token, this.getCookieOptions());
+        res.cookie(refreshTokenCookieKey, authResult.refreshToken, this.getCookieOptions());
 
         return authResult;
     }
@@ -224,7 +228,7 @@ export class AuthService {
             }
         }
 
-        res.clearCookie('refresh_token', this.getCookieOptions());
+        res.clearCookie(refreshTokenCookieKey, this.getCookieOptions());
     }
 
     /**
@@ -232,7 +236,7 @@ export class AuthService {
      */
     async logoutAll(userId: string, res: Response): Promise<void> {
         await this.sessionService.revokeAllUserSessions(userId);
-        res.clearCookie('refresh_token', this.getCookieOptions());
+        res.clearCookie(refreshTokenCookieKey, this.getCookieOptions());
     }
 
     /**
@@ -274,20 +278,20 @@ export class AuthService {
         expiresAt.setDate(expiresAt.getDate() + 7);
 
         await this.sessionService.create({
-            user_id: user.id,
-            session_id: sessionId,
-            refresh_token_hash: refreshTokenHash,
-            ip_address: ipAddress,
-            user_agent: userAgent,
-            expires_at: expiresAt,
-            previous_session_id: previousSessionId, // For audit trail
+            userId: user.id,
+            sessionId: sessionId,
+            refreshTokenHash: refreshTokenHash,
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+            expiresAt: expiresAt,
+            previousSessionId: previousSessionId, // For audit trail
         });
 
         return {
-            access_token: accessToken,
-            refresh_token: refreshToken,
-            token_type: 'Bearer',
-            expires_in: this.configService.get("JWT_ACCESS_EXPIRY_IN_SECS", 900), // 15 minutes in seconds
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            tokenType: 'Bearer',
+            expiresIn: this.configService.get("JWT_ACCESS_EXPIRY_IN_SECS", 900), // 15 minutes in seconds
         };
     }
 
@@ -310,13 +314,13 @@ export class AuthService {
         userAgent?: string,
     ): boolean {
         // Flag if IP address changed (could be VPN/travel, so don't block)
-        const ipChanged: boolean = !!(session.ip_address && ipAddress && session.ip_address !== ipAddress);
+        const ipChanged: boolean = !!(session.ipAddress && ipAddress && session.ipAddress !== ipAddress);
 
         // Flag if user agent changed significantly
         const userAgentChanged: boolean = !!(
-            session.user_agent &&
+            session.userAgent &&
             userAgent &&
-            !this.areUserAgentsSimilar(session.user_agent, userAgent)
+            !this.areUserAgentsSimilar(session.userAgent, userAgent)
         );
 
         return ipChanged || userAgentChanged;
@@ -343,7 +347,7 @@ export class AuthService {
     async revokeSession(userId: string, sessionId: number): Promise<void> {
         const session = await this.sessionService.findById(sessionId);
 
-        if (!session || session.user_id !== userId) {
+        if (!session || session.userId !== userId) {
             throw new UnauthorizedException('Session not found');
         }
 

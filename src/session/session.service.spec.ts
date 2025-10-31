@@ -112,7 +112,7 @@ describe('SessionService', () => {
     it('should filter by user_id', async () => {
       mockPrismaService.session.findMany.mockResolvedValue([mockSafeSession]);
 
-      await service.findAll({ user_id: 1 });
+      await service.findAll({ userId: 1 });
 
       expect(prisma.session.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -126,7 +126,7 @@ describe('SessionService', () => {
     it('should filter by is_revoked', async () => {
       mockPrismaService.session.findMany.mockResolvedValue([mockSafeSession]);
 
-      await service.findAll({ is_revoked: true });
+      await service.findAll({ isRevoked: true });
 
       expect(prisma.session.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -140,7 +140,7 @@ describe('SessionService', () => {
     it('should include expired sessions when requested', async () => {
       mockPrismaService.session.findMany.mockResolvedValue([mockSafeSession]);
 
-      await service.findAll({ include_expired: true });
+      await service.findAll({ includeExpired: true });
 
       expect(prisma.session.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -3,29 +3,29 @@ import { Type } from 'class-transformer';
 
 export class CreateSessionDto {
     @IsInt()
-    user_id: string;
+    userId: string;
 
     @IsString()
     @IsNotEmpty()
-    session_id: string;
+    sessionId: string;
 
     @IsString()
     @IsNotEmpty()
-    refresh_token_hash: string;
+    refreshTokenHash: string;
 
     @IsOptional()
     @IsString()
-    ip_address?: string;
+    ipAddress?: string;
 
     @IsOptional()
     @IsString()
-    user_agent?: string;
+    userAgent?: string;
 
     @Type(() => Date)
     @IsDate()
-    expires_at: Date;
+    expiresAt: Date;
 
     @IsOptional()
     @IsInt()
-    previous_session_id?: number;
+    previousSessionId?: number;
 }
