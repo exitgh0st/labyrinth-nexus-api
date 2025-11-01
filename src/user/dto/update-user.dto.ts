@@ -6,42 +6,42 @@ import { PartialType } from '@nestjs/mapped-types';
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsBoolean()
-  email_verified?: boolean;
+  emailVerified?: boolean;
 
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  email_verified_at?: Date | null;
+  emailVerifiedAt?: Date | null;
 
   @IsOptional()
   @IsString()
-  password_hash?: string;
+  passwordHash?: string;
 
   @IsOptional()
   @IsBoolean()
-  is_deleted?: boolean;
+  isDeleted?: boolean;
 
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  deleted_at?: Date | null;
+  deletedAt?: Date | null;
 
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  last_login_at?: Date | null;
+  lastLoginAt?: Date | null;
 
   @IsOptional()
   @IsInt()
-  failed_login_attempts?: number;
+  failedLoginAttempts?: number;
 
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  locked_until?: Date | null;
+  lockedUntil?: Date | null;
 
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  password_changed_at?: Date | null;
+  passwordChangedAt?: Date | null;
 }
