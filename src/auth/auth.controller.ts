@@ -39,10 +39,10 @@ export class AuthController {
             res,
             ipAddress,
             userAgent,
-        );
+        );  
 
         // Don't send refresh token in response body (it's in httpOnly cookie)
-        const { refreshToken: refresh_token, ...publicResult } = result;
+        const { refreshToken, ...publicResult } = result;
 
         return publicResult;
     }
@@ -54,8 +54,7 @@ export class AuthController {
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
     ) {
-        const refreshToken = req.cookies?.refresh_token;
-
+        const refreshToken = req.cookies?.refreshToken;
         if (!refreshToken) {
             throw new UnauthorizedException('Refresh token not found');
         }
