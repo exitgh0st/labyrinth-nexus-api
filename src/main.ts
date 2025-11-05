@@ -11,12 +11,13 @@ async function bootstrap() {
 
   app.useGlobalFilters(new PrismaExceptionFilter());
   app.useGlobalPipes(new ValidationPipe());
+  app.setGlobalPrefix('api');
 
   app.use(cookieParser());
 
   // CORS configuration
   app.enableCors({
-    origin: configService.get<string>('FRONTEND_URL', 'http://localhost:3000'),
+    origin: configService.get<string>('FRONTEND_URL', 'http://localhost:4200'),
     credentials: true, // Important: allow cookies
   });
 
