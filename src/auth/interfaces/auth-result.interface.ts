@@ -1,6 +1,7 @@
+import { SafeUser } from "src/user/user.service";
+
 export interface AuthResult {
     accessToken: string;
     refreshToken: string;
-    tokenType: string;
-    expiresIn: number;
+    user: SafeUser
 }
