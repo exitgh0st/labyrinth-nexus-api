@@ -31,9 +31,9 @@ export class AuthService {
         return {
             httpOnly: true,
             secure: this.configService.get('NODE_ENV') === 'production',
-            sameSite: "strict",
+            sameSite: "none",
             maxAge: this.configService.get<number>('COOKIE_MAX_AGE', 7 * 24 * 60 * 60 * 1000),
-            path: this.configService.get<string>('COOKIE_PATH', '/auth'),
+            path: this.configService.get<string>('COOKIE_PATH', '/api/auth'),
         };
     }
 
@@ -255,7 +255,7 @@ export class AuthService {
 
         // Generate stateless access token (NOT stored in DB)
         const accessToken = this.jwtService.sign(payload, {
-            expiresIn: this.configService.get("JWT_ACCESS_EXPIRY", "15m")
+            expiresIn: `${this.configService.get("JWT_ACCESS_EXPIRY_MINS", 15)}m`
         });
 
         // Generate refresh token with session identifier
@@ -267,7 +267,7 @@ export class AuthService {
         };
 
         const refreshToken = this.jwtService.sign(refreshPayload, {
-            expiresIn: this.configService.get("JWT_REFRESH_EXPIRY", "7d")
+            expiresIn: `${this.configService.get("JWT_REFRESH_EXPIRY_DAYS", 7)}d`
         });
 
         // Hash the refresh token before storing
@@ -290,8 +290,7 @@ export class AuthService {
         return {
             accessToken: accessToken,
             refreshToken: refreshToken,
-            tokenType: 'Bearer',
-            expiresIn: this.configService.get("JWT_ACCESS_EXPIRY_IN_SECS", 900), // 15 minutes in seconds
+            user: user
         };
     }
 
