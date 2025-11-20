@@ -1,3 +1,4 @@
+// user.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -5,101 +6,156 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FindAllUsersDto } from './dto/find-all-users.dto';
 import { userSelect } from './selects/user-select';
-import { Prisma } from 'generated/prisma';
 import { safeUserSelect } from './selects/safe-user-select';
-
-export type User = Prisma.UserGetPayload<{
-  select: typeof userSelect;
-}>;
-
-export type SafeUser = Prisma.UserGetPayload<{
-  select: typeof safeUserSelect;
-}>;
+import { FormattedSafeUser, FormattedUser, transformUser, transformSafeUser } from './utils/transform-user.util';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
-  async create(createUserDto: CreateUserDto): Promise<SafeUser> {
-    const { password, ...dtoWithoutPassword } = createUserDto;
+  async create(createUserDto: CreateUserDto): Promise<FormattedSafeUser> {
+    const { password, roleIds = [], ...dtoWithoutPassword } = createUserDto;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         passwordHash: hashedPassword,
-        ...dtoWithoutPassword
+        ...dtoWithoutPassword,
+        ...(roleIds.length > 0 && {
+          userRoles: {
+            create: roleIds.map(roleId => ({ roleId }))
+          }
+        })
       },
       select: safeUserSelect
     });
+
+    return transformSafeUser(user);
   }
 
-  async findAll(params?: FindAllUsersDto): Promise<SafeUser[]> {
+  async findAll(params?: FindAllUsersDto): Promise<{ data: FormattedSafeUser[]; total: number }> {
     const { skip = 0, take = 10, role, isActive } = params || {};
-  
-  return this.prisma.user.findMany({
-    skip,
-    take,
-    where: {
-      ...(role !== undefined && {
+
+    const where = {
+      ...(role && {
         userRoles: {
           some: {
-            role: {
-              name: role,
-            },
-          },
-        },
+            role: { name: role }
+          }
+        }
       }),
-      ...(isActive !== undefined && { isActive }),
-    },
-    select: safeUserSelect,
-    orderBy: { createdAt: 'desc' },
-  });
+      ...(isActive !== undefined && { isActive })
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        skip,
+        take,
+        where,
+        select: safeUserSelect,
+        orderBy: { createdAt: 'desc' }
+      }),
+      this.prisma.user.count({ where })
+    ]);
+
+    return {
+      data: data.map(transformSafeUser),
+      total
+    };
   }
 
-  async findOne(id: string): Promise<SafeUser | null>  {
-    return this.prisma.user.findUnique({
+  async findOne(id: string): Promise<FormattedSafeUser | null> {
+    const user = await this.prisma.user.findUnique({
       where: { id },
       select: safeUserSelect
     });
+
+    return user ? transformSafeUser(user) : null;
   }
 
-  async findById(id: string): Promise<SafeUser | null>  {
-    return this.prisma.user.findUnique({
-      where: { id },
-      select: safeUserSelect
-    });
+  async findById(id: string): Promise<FormattedSafeUser | null> {
+    return this.findOne(id);
   }
 
   // Should only be used by Auth Service
-  async findByEmail(email: string): Promise<User | null>  {
-    return this.prisma.user.findUnique({
+  async findByEmail(email: string): Promise<FormattedUser | null> {
+    const user = await this.prisma.user.findUnique({
       where: { email },
       select: userSelect
     });
+
+    return user ? transformUser(user) : null;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<SafeUser> {
-    return this.prisma.user.update({
-      data: updateUserDto,
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<FormattedSafeUser> {
+    const { roleIds, password, ...userData } = updateUserDto;
+
+    // Handle password hashing
+    if (password) {
+      userData.passwordHash = await this.getPasswordHash(password);
+      userData.passwordChangedAt = new Date();
+    }
+
+    // If roleIds are provided, update in a transaction
+    if (roleIds !== undefined) {
+      const user = await this.prisma.$transaction(async (tx) => {
+        // Delete existing roles
+        await tx.userRole.deleteMany({ where: { userId: id } });
+
+        // Update user and create new roles
+        return tx.user.update({
+          where: { id },
+          data: {
+            ...userData,
+            ...(roleIds.length > 0 && {
+              userRoles: {
+                create: roleIds.map(roleId => ({ roleId }))
+              }
+            })
+          },
+          select: safeUserSelect
+        });
+      });
+
+      return transformSafeUser(user);
+    }
+
+    // Simple update without role changes
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: userData,
+      select: safeUserSelect
+    });
+
+    return transformSafeUser(user);
+  }
+
+  async getPasswordHash(password: string): Promise<string> {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    return hashedPassword;
+  }
+
+  async updatePassword(id: string, newPassword: string): Promise<FormattedSafeUser> {
+    const hashedPassword = await this.getPasswordHash(newPassword);
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: {
+        passwordHash: hashedPassword,
+        passwordChangedAt: new Date()
+      },
+      select: safeUserSelect
+    });
+
+    return transformSafeUser(user);
+  }
+
+  async delete(id: string): Promise<FormattedSafeUser> {
+    const user = await this.prisma.user.delete({
       where: { id },
       select: safeUserSelect
     });
-  }
 
-  async updatePassword(id: string, newPassword: string): Promise<SafeUser> {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    return this.prisma.user.update({
-      where: { id },
-      data: { passwordHash: hashedPassword },
-      select: safeUserSelect,
-    });
-  }
-
-  async delete(id: string): Promise<SafeUser> {
-    return this.prisma.user.delete({
-      where: { id },
-      select: safeUserSelect
-    });
+    return transformSafeUser(user);
   }
 }

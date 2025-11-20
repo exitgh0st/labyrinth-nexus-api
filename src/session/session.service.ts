@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
-import { Prisma } from 'generated/prisma';
+import { Prisma, Role } from 'generated/prisma';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { safeSessionSelect } from './selects/safe-session.select';
 import { FindAllSessionsDto } from './dto/find-all-sessions.dto';
+import { FormattedSafeUser, transformSafeUser } from 'src/user/utils/transform-user.util';
 
-export type SafeSession = Prisma.SessionGetPayload<{
+type RawSafeSession = Prisma.SessionGetPayload<{
     select: typeof safeSessionSelect;
 }>;
+
+export type SafeSession = Omit<RawSafeSession, 'user'> & {
+    user: FormattedSafeUser
+};
 
 @Injectable()
 export class SessionService {
@@ -15,11 +20,21 @@ export class SessionService {
         private prisma: PrismaService,
     ) { }
 
+    transformSession(session: RawSafeSession): SafeSession {
+        const { user, ...sessionWithoutUser } = session
+        const safeUser = transformSafeUser(session.user);
+
+        const safeSession: SafeSession = { user: safeUser, ...sessionWithoutUser };
+        return safeSession;
+    }
+
     async create(dto: CreateSessionDto): Promise<SafeSession> {
-        return this.prisma.session.create({
+        const session = await this.prisma.session.create({
             data: dto,
             select: safeSessionSelect
         });
+
+        return this.transformSession(session);
     }
 
     async findAll(params?: FindAllSessionsDto): Promise<SafeSession[]> {
@@ -34,13 +49,17 @@ export class SessionService {
             }),
         };
 
-        return this.prisma.session.findMany({
+        const sessions = await this.prisma.session.findMany({
             skip,
             take,
             where,
             select: safeSessionSelect,
             orderBy: { createdAt: 'desc' },
         });
+
+        const safeSessions = sessions.map(session => this.transformSession(session));
+
+        return safeSessions;
     }
 
     async findById(id: number): Promise<SafeSession | null> {
@@ -48,7 +67,12 @@ export class SessionService {
             where: { id },
             select: safeSessionSelect,
         });
-        return session;
+
+        if (!session) {
+            return null;
+        }
+
+        return this.transformSession(session);
     }
 
     async findByRefreshTokenHash(tokenHash: string): Promise<SafeSession | null> {
@@ -56,7 +80,12 @@ export class SessionService {
             where: { refreshTokenHash: tokenHash },
             select: safeSessionSelect,
         });
-        return session;
+
+        if (!session) {
+            return null;
+        }
+
+        return this.transformSession(session);
     }
 
     async findBySessionId(sessionId: string): Promise<SafeSession | null> {
@@ -64,7 +93,12 @@ export class SessionService {
             where: { sessionId },
             select: safeSessionSelect,
         });
-        return session;
+        
+        if (!session) {
+            return null;
+        }
+
+        return this.transformSession(session);
     }
 
     async findActiveByUserId(userId: string): Promise<SafeSession[]> {
@@ -78,7 +112,10 @@ export class SessionService {
             select: safeSessionSelect,
             orderBy: { createdAt: 'desc' },
         });
-        return sessions;
+
+        const safeSessions = sessions.map(session => this.transformSession(session));
+
+        return safeSessions;
     }
 
     async revokeSession(id: number): Promise<void> {

@@ -1,7 +1,7 @@
-import { SafeUser } from "src/user/user.service";
+import { FormattedSafeUser } from "src/user/utils/transform-user.util";
 
 export interface AuthResult {
     accessToken: string;
     refreshToken: string;
-    user: SafeUser
+    user: FormattedSafeUser
 }

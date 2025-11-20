@@ -1,9 +1,9 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { SafeUser } from 'src/user/user.service';
+import { FormattedSafeUser } from 'src/user/utils/transform-user.util';
 
-export const CurrentUser = createParamDecorator((data: keyof SafeUser | undefined, ctx: ExecutionContext): SafeUser | any => {
+export const CurrentUser = createParamDecorator((data: keyof FormattedSafeUser | undefined, ctx: ExecutionContext): FormattedSafeUser | any => {
     const request = ctx.switchToHttp().getRequest();
-    const user = request.user as SafeUser;
+    const user = request.user as FormattedSafeUser;
 
     if (!user) {
         return null;

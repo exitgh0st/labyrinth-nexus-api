@@ -4,7 +4,6 @@ import {
     Body,
     Req,
     Res,
-    UseGuards,
     Get,
     HttpCode,
     HttpStatus,
@@ -15,9 +14,9 @@ import {
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import type { SafeUser } from 'src/user/user.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
+import type { FormattedSafeUser } from 'src/user/utils/transform-user.util';
 
 @Controller('auth')
 export class AuthController {
@@ -92,7 +91,7 @@ export class AuthController {
     @Post('logout-all')
     @HttpCode(HttpStatus.OK)
     async logoutAll(
-        @CurrentUser() user: SafeUser,
+        @CurrentUser() user: FormattedSafeUser,
         @Res({ passthrough: true }) res: Response,
     ) {
         await this.authService.logoutAll(user.id, res);
@@ -103,7 +102,7 @@ export class AuthController {
     @Post(':id/revoke')
     @HttpCode(HttpStatus.OK)
     async revokeSession(
-        @CurrentUser() user: SafeUser,
+        @CurrentUser() user: FormattedSafeUser,
         @Param('id', ParseIntPipe) sessionId: number,
     ) {
         await this.authService.revokeSession(user.id, sessionId);
@@ -112,7 +111,7 @@ export class AuthController {
     }
 
     @Get('me')
-    async getCurrentUser(@CurrentUser() user: SafeUser) {
+    async getCurrentUser(@CurrentUser() user: FormattedSafeUser) {
         return user;
     }
 }

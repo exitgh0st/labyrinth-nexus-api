@@ -5,13 +5,15 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { SafeSession, SessionService } from 'src/session/session.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
-import { SafeUser, UserService } from 'src/user/user.service';
+import { UserService } from 'src/user/user.service';
 import type { Response, CookieOptions } from 'express';
 import { AuthResult } from './interfaces/auth-result.interface';
+import { User } from 'generated/prisma';
+import { SafeSession, SessionService } from 'src/session/session.service';
+import { FormattedSafeUser } from 'src/user/utils/transform-user.util';
 
 const refreshTokenCookieKey = "refreshToken";
 
@@ -40,7 +42,7 @@ export class AuthService {
     /**
      * Validates user by email and password
      */
-    async validateUser(email: string, password: string): Promise<SafeUser | null> {
+    async validateUser(email: string, password: string): Promise<FormattedSafeUser | null> {
         // 1. Validate email format first
         if (!this.isValidEmail(email)) {
             throw new BadRequestException('Invalid email format');
@@ -97,7 +99,7 @@ export class AuthService {
         return emailRegex.test(email);
     }
 
-    private async handleFailedLogin(user: SafeUser): Promise<void> {
+    private async handleFailedLogin(user: User): Promise<void> {
         const attempts = (user.failedLoginAttempts || 0) + 1;
 
         const lockDuration = 15 * 60 * 1000; // 15 minutes
@@ -118,7 +120,7 @@ export class AuthService {
     /**
      * Validates user by ID only (for access token validation)
      */
-    async validateUserById(userId: string): Promise<SafeUser | null> {
+    async validateUserById(userId: string): Promise<FormattedSafeUser | null> {
         const user = await this.userService.findById(userId);
 
         if (!user) {
@@ -191,7 +193,7 @@ export class AuthService {
         }
 
         // Additional security: check if IP or user agent changed significantly
-        if (this.shouldFlagSuspiciousActivity(session!, ipAddress, userAgent)) {
+        // if (this.shouldFlagSuspiciousActivity(session!, ipAddress, userAgent)) {
             // Optional: require re-authentication or send security alert
             // For now, we'll allow it but could add stricter policies
             // TODO: Implement notification service
@@ -200,7 +202,7 @@ export class AuthService {
             //     ipAddress,
             //     userAgent,
             // });
-        }
+        // }
 
         // Revoke old session (refresh token rotation)
         await this.sessionService.revokeSession(session!.id);
@@ -243,14 +245,14 @@ export class AuthService {
      * Generate access and refresh tokens
      */
     private async generateTokens(
-        user: SafeUser,
+        user: FormattedSafeUser,
         ipAddress?: string,
         userAgent?: string,
         previousSessionId?: number,
     ): Promise<AuthResult> {
         const payload = {
             sub: user.id,
-            role: user.userRoles.map(userRole => { return userRole.role.name })
+            role: user.roles.map(role => { return role.name })
         };
 
         // Generate stateless access token (NOT stored in DB)
