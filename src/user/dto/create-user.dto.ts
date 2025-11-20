@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsOptional, IsEmail, IsNumber, IsArray } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsEmail, IsNumber, IsArray, IsInt } from 'class-validator';
 import { UpdatePasswordDto } from './update-user-password.dto';
 
 export class CreateUserDto extends UpdatePasswordDto {
@@ -6,6 +6,7 @@ export class CreateUserDto extends UpdatePasswordDto {
   email: string;
 
   @IsArray()
+  @IsInt({ each: true })
   roleIds: number[];
 
   @IsOptional()
