@@ -2,7 +2,8 @@ import { IsInt, IsString, IsOptional, IsDate, IsNotEmpty } from 'class-validator
 import { Type } from 'class-transformer';
 
 export class CreateSessionDto {
-    @IsInt()
+    @IsString()
+    @IsNotEmpty()
     userId: string;
 
     @IsString()
