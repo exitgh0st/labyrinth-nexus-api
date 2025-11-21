@@ -53,8 +53,8 @@ export class AuthController {
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
     ) {
-        const refreshToken = req.cookies?.refreshToken;
-        if (!refreshToken) {
+        const refreshTokenFromCookies = req.cookies?.refreshToken;
+        if (!refreshTokenFromCookies) {
             throw new UnauthorizedException('Refresh token not found');
         }
 
@@ -62,14 +62,14 @@ export class AuthController {
         const userAgent = req.get('user-agent');
 
         const result = await this.authService.refreshToken(
-            refreshToken,
+            refreshTokenFromCookies,
             res,
             ipAddress,
             userAgent,
         );
 
         // Don't send refresh token in response body
-        const { refreshToken: refresh_token, ...publicResult } = result;
+        const { refreshToken, ...publicResult } = result;
 
         return publicResult;
     }
@@ -81,7 +81,7 @@ export class AuthController {
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
     ) {
-        const refreshToken = req.cookies?.refresh_token;
+        const refreshToken = req.cookies?.refreshToken;
         
         await this.authService.logout(refreshToken, res);
 

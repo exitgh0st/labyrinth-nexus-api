@@ -14,6 +14,7 @@ import { AuthResult } from './interfaces/auth-result.interface';
 import { User } from 'generated/prisma';
 import { SafeSession, SessionService } from 'src/session/session.service';
 import { FormattedSafeUser } from 'src/user/utils/transform-user.util';
+import { PrismaService } from 'src/shared/services/prisma.service';
 
 const refreshTokenCookieKey = "refreshToken";
 
@@ -24,6 +25,7 @@ export class AuthService {
         private userService: UserService,
         private sessionService: SessionService,
         private configService: ConfigService,
+        private prisma: PrismaService
     ) { }
 
     /**
@@ -33,7 +35,7 @@ export class AuthService {
         return {
             httpOnly: true,
             secure: this.configService.get('NODE_ENV') === 'production',
-            sameSite: "none",
+            sameSite: "lax",
             maxAge: this.configService.get<number>('COOKIE_MAX_AGE', 7 * 24 * 60 * 60 * 1000),
             path: this.configService.get<string>('COOKIE_PATH', '/api/auth'),
         };
@@ -57,11 +59,9 @@ export class AuthService {
         const user = await this.userService.findByEmail(email.toLowerCase().trim());
 
         if (!user) {
-            return null;  // Don't reveal if user exists
+            throw new UnauthorizedException('Invalid credentials');
         }
 
-        // 4. Check if account is active BEFORE password check
-        // (prevents timing attacks from revealing account status)
         if (!user.isActive) {
             throw new UnauthorizedException('Account is inactive');
         }
@@ -87,10 +87,7 @@ export class AuthService {
             lastLoginAt: new Date()
         });
 
-        // 9. Return safe user (without password_hash)
-        // For compatibility, destructure passwordHash, but it may not exist on SafeUser
-        // If it does, exclude it
-        const { passwordHash, ...safeUser } = user as any;
+        const { passwordHash, ...safeUser } = user;
         return safeUser;
     }
 
@@ -205,15 +202,18 @@ export class AuthService {
         // }
 
         // Revoke old session (refresh token rotation)
-        await this.sessionService.revokeSession(session!.id);
+        // Combine revocation and token generation in a transaction
+        const authResult = await this.prisma.$transaction(async (tx) => {
+            await this.sessionService.revokeSession(session!.id);
 
-        // Generate new tokens
-        const authResult = await this.generateTokens(
-            session!.user,
-            ipAddress,
-            userAgent,
-            session!.id // Pass old session ID for audit trail
-        );
+            // Generate new tokens (does not require db, but passes for possible audit trail)
+            return this.generateTokens(
+                session!.user,
+                ipAddress,
+                userAgent,
+                session!.id // Pass old session ID for audit trail
+            );
+        });
 
         res.cookie(refreshTokenCookieKey, authResult.refreshToken, this.getCookieOptions());
 
