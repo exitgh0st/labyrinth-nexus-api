@@ -76,7 +76,7 @@ export class SessionService {
     }
 
     async findByRefreshTokenHash(tokenHash: string): Promise<SafeSession | null> {
-        const session = await this.prisma.session.findFirst({
+        const session = await this.prisma.session.findUnique({
             where: { refreshTokenHash: tokenHash },
             select: safeSessionSelect,
         });
@@ -93,7 +93,7 @@ export class SessionService {
             where: { sessionId },
             select: safeSessionSelect,
         });
-        
+
         if (!session) {
             return null;
         }
