@@ -2,18 +2,20 @@ import {
     BadRequestException,
     Injectable,
     UnauthorizedException,
+    ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { UserService } from 'src/user/user.service';
 import type { Response, CookieOptions } from 'express';
 import { AuthResult } from './interfaces/auth-result.interface';
 import { User } from 'generated/prisma';
 import { SafeSession, SessionService } from 'src/session/session.service';
-import { FormattedSafeUser } from 'src/user/utils/transform-user.util';
+import { FormattedSafeUser, FormattedUser } from 'src/user/utils/transform-user.util';
 import { PrismaService } from 'src/shared/services/prisma.service';
 
 const refreshTokenCookieKey = "refreshToken";
@@ -96,7 +98,7 @@ export class AuthService {
         return emailRegex.test(email);
     }
 
-    private async handleFailedLogin(user: User): Promise<void> {
+    private async handleFailedLogin(user: FormattedUser): Promise<void> {
         const attempts = (user.failedLoginAttempts || 0) + 1;
 
         const lockDuration = 15 * 60 * 1000; // 15 minutes
@@ -129,6 +131,72 @@ export class AuthService {
         }
 
         return user;
+    }
+
+    async register(
+        registerDto: RegisterDto,
+        res: Response,
+        ipAddress?: string,
+        userAgent?: string,
+    ): Promise<AuthResult> {
+        // Validate email format
+        if (!this.isValidEmail(registerDto.email)) {
+            throw new BadRequestException('Invalid email format');
+        }
+
+        // Check if user already exists
+        const existingUser = await this.userService.findByEmail(registerDto.email.toLowerCase().trim());
+        if (existingUser) {
+            throw new ConflictException('User with this email already exists');
+        }
+
+        // Find the default 'USER' role
+        const defaultRole = await this.prisma.role.findUnique({
+            where: { name: 'USER' },
+        });
+
+        if (!defaultRole) {
+            throw new BadRequestException('Default role not found');
+        }
+
+        console.log(defaultRole);
+
+        // Hash password
+        const passwordHash = await bcrypt.hash(registerDto.password, 10);
+
+        // Create user with default role
+        const user = await this.prisma.user.create({
+            data: {
+                email: registerDto.email.toLowerCase().trim(),
+                passwordHash: passwordHash,
+                userRoles: {
+                    create: {
+                        roleId: defaultRole.id,
+                    },
+                },
+            },
+            include: {
+                userRoles: {
+                    include: {
+                        role: true,
+                    },
+                },
+            },
+        });
+
+        // Transform user to safe format
+        const { passwordHash: _, ...safeUser } = user;
+        const formattedUser: FormattedSafeUser = {
+            ...safeUser,
+            roles: user.userRoles.map(ur => ur.role),
+        };
+
+        // Generate tokens and create session
+        const authResult = await this.generateTokens(formattedUser, ipAddress, userAgent);
+
+        res.cookie(refreshTokenCookieKey, authResult.refreshToken, this.getCookieOptions());
+
+        return authResult;
     }
 
     async login(
@@ -191,14 +259,14 @@ export class AuthService {
 
         // Additional security: check if IP or user agent changed significantly
         // if (this.shouldFlagSuspiciousActivity(session!, ipAddress, userAgent)) {
-            // Optional: require re-authentication or send security alert
-            // For now, we'll allow it but could add stricter policies
-            // TODO: Implement notification service
-            // await this.notificationService.sendSecurityAlert(session.userId, {
-            //     type: 'suspicious_activity',
-            //     ipAddress,
-            //     userAgent,
-            // });
+        // Optional: require re-authentication or send security alert
+        // For now, we'll allow it but could add stricter policies
+        // TODO: Implement notification service
+        // await this.notificationService.sendSecurityAlert(session.userId, {
+        //     type: 'suspicious_activity',
+        //     ipAddress,
+        //     userAgent,
+        // });
         // }
 
         // Revoke old session (refresh token rotation)
@@ -353,5 +421,64 @@ export class AuthService {
         }
 
         await this.sessionService.revokeSession(sessionId);
+    }
+
+    async requestPasswordReset(email: string): Promise<void> {
+        const user = await this.userService.findByEmail(email);
+
+        if (!user) {
+            // Don't reveal if user exists
+            return;
+        }
+
+        // Generate reset token (store in DB with expiry)
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenHash = this.hashToken(resetToken);
+        const resetTokenExpiry = new Date();
+        resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1); // 1 hour
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                passwordResetToken: resetTokenHash,
+                passwordResetExpiry: resetTokenExpiry,
+            },
+        });
+
+        // TODO: Send email with reset link
+        // await this.emailService.sendPasswordResetEmail(email, resetToken);
+    }
+
+    /**
+     * Reset password using token
+     */
+    async resetPassword(token: string, newPassword: string): Promise<void> {
+        const tokenHash = this.hashToken(token);
+
+        const user = await this.prisma.user.findFirst({
+            where: {
+                passwordResetToken: tokenHash,
+                passwordResetExpiry: { gt: new Date() },
+            },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException('Invalid or expired reset token');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                passwordHash: hashedPassword,
+                passwordResetToken: null,
+                passwordResetExpiry: null,
+                passwordChangedAt: new Date(),
+            },
+        });
+
+        // Revoke all existing sessions for security
+        await this.sessionService.revokeAllUserSessions(user.id);
     }
 }
