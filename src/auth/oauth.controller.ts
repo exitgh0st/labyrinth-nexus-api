@@ -18,6 +18,8 @@ import { Public } from './decorators/public.decorator';
 import { ConfigService } from '@nestjs/config';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { FormattedSafeUser } from 'src/user/utils/transform-user.util';
+import { Roles } from './decorators/roles.decorator';
+import { RolesGuard } from './guards/roles.guard';
 
 @Controller('auth/oauth')
 export class OAuthController {
@@ -78,6 +80,8 @@ export class OAuthController {
   // Link Google account to existing user (requires authentication)
   @Post('link/google')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'USER')
   async linkAccount(
     @CurrentUser() user: FormattedSafeUser,
     @Body() body: { profile: any },
@@ -93,6 +97,8 @@ export class OAuthController {
   // Unlink Google account (requires authentication)
   @Delete('unlink/google')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'USER')
   async unlinkAccount(
     @CurrentUser() user: FormattedSafeUser,
   ) {

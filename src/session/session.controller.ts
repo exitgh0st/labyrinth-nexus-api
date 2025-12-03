@@ -12,12 +12,11 @@ import {
   } from '@nestjs/common';
   import { SessionService } from './session.service';
   import { FindAllSessionsDto } from './dto/find-all-sessions.dto';
-  import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
   import { RolesGuard } from 'src/auth/guards/roles.guard';
   import { Roles } from 'src/auth/decorators/roles.decorator';
   
   @Controller('sessions')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN') // Only admins can manage sessions
   export class SessionController {
     constructor(private readonly sessionService: SessionService) {}
