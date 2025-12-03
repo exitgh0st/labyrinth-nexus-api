@@ -12,5 +12,7 @@
     <include file="migration-scripts/005-seed-user-data.xml" />
     <include file="migration-scripts/006-create-user-role-table.xml" />
     <include file="migration-scripts/007-seed-user-role-data.xml" />
+    <include file="migration-scripts/008-add-password-reset-fields.xml" />
+
 
 </databaseChangeLog>

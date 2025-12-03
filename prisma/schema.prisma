@@ -25,6 +25,8 @@ model User {
   failedLoginAttempts  Int         @default(0) @map("failed_login_attempts")
   lockedUntil          DateTime?   @map("locked_until") @db.Timestamp(6)
   passwordChangedAt    DateTime?   @map("password_changed_at") @db.Timestamp(6)
+  passwordResetToken   String?     @map("password_reset_token") @db.VarChar(255)
+  passwordResetExpiry  DateTime?   @map("password_reset_expiry") @db.Timestamp(6)
   createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt            DateTime    @default(now()) @map("updated_at") @db.Timestamp(6)
   
@@ -34,6 +36,7 @@ model User {
   grantedUserRoles     UserRole[]  @relation("GrantedBy")
 
   @@map("user")
+  @@index([passwordResetToken], map: "idx_user_password_reset_token")
 }
 
 model Session {
