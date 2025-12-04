@@ -1,5 +1,5 @@
 // user.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -136,7 +136,28 @@ export class UserService {
     return hashedPassword;
   }
 
-  async updatePassword(id: string, newPassword: string): Promise<FormattedSafeUser> {
+  async updatePassword(id: string, newPassword: string, currentPassword?: string): Promise<FormattedSafeUser> {
+    if (!newPassword) {
+      throw new UnauthorizedException('New password is required');
+    }
+
+    // If currentPassword is provided, verify it
+    if (currentPassword) {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        select: { passwordHash: true }
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
+    }
+
     const hashedPassword = await this.getPasswordHash(newPassword);
     const user = await this.prisma.user.update({
       where: { id },

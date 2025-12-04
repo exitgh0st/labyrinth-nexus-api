@@ -75,7 +75,11 @@ export class UserController {
       throw new ForbiddenException('You can only update your own password');
     }
 
-    return this.userService.updatePassword(id, updatePasswordDto.password);
+    return this.userService.updatePassword(
+      id,
+      updatePasswordDto.password,
+      updatePasswordDto.currentPassword,
+    );
   }
 
   @Delete(':id')
