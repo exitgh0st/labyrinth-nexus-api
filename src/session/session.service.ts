@@ -40,8 +40,6 @@ export class SessionService {
     async findAll(params?: FindAllSessionsDto): Promise<{ data: SafeSession[]; total: number }> {
         const { skip = 0, take = 10, userId, isRevoked, includeExpired } = params || {};
 
-        console.log(params);
-
         // use camelCase keys for Prisma fields
         const where: Prisma.SessionWhereInput = {
             ...(userId && { userId }),
