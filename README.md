@@ -20,6 +20,7 @@ A production-ready NestJS starter template featuring JWT authentication, OAuth i
 
 - **Developer Experience**
   - TypeScript with strict type checking
+  - Liquibase for database migrations and version control
   - Prisma ORM for type-safe database access
   - Winston logger integration
   - ESLint + Prettier for code quality
@@ -36,6 +37,9 @@ A production-ready NestJS starter template featuring JWT authentication, OAuth i
 
 - **Node.js** 18+ and npm
 - **PostgreSQL** 14+
+- **Liquibase** (for database migrations)
+  - Install: https://www.liquibase.org/download
+  - Or use Docker: `docker pull liquibase/liquibase`
 - **Git**
 
 ## 🛠️ Installation
@@ -68,19 +72,30 @@ cp .env.example .env.development.local
 
 ### 4. Set up the database
 
+This project uses **Liquibase** for database migrations and seeding, and **Prisma** as the ORM.
+
 ```bash
 # Create PostgreSQL database
 createdb your_database_name
 
-# Run Prisma migrations
-npx prisma migrate dev
+# Run Liquibase migrations (creates tables and seeds initial data)
+# Development:
+npm run liquibase:update-dev
 
-# Generate Prisma Client
+# Production:
+npm run liquibase:update-prod
+
+# Generate Prisma Client (for type-safe database access in code)
 npm run prisma:generate
 
-# Seed initial data (creates ADMIN and USER roles)
-npm run db:seed
+# Optional: Pull latest schema from database to Prisma
+npm run prisma:db-pull
 ```
+
+**Note:** Liquibase migrations include:
+- User, Role, Session, and UserRole table creation
+- Initial ADMIN and USER role seeding
+- Sample admin user creation
 
 ### 5. Start the application
 
@@ -115,34 +130,48 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 ### Default Roles
 
-The system comes with two predefined roles (created via seed script):
+The system comes with two predefined roles (created via Liquibase seed scripts):
 - **ADMIN** - Full access to all endpoints
 - **USER** - Standard user access
 
 ## 📁 Project Structure
 
 ```
-src/
-├── auth/                 # Authentication & Authorization
-│   ├── decorators/       # Custom decorators (Public, Roles, CurrentUser)
-│   ├── dto/              # Data Transfer Objects
-│   ├── guards/           # Auth guards (JWT, Roles, Throttle)
-│   ├── strategies/       # Passport strategies (JWT, Google)
-│   └── tasks/            # Scheduled tasks (session cleanup)
-├── user/                 # User management
-│   ├── dto/              # User DTOs
-│   ├── selects/          # Prisma select queries
-│   └── utils/            # User transformation utilities
-├── role/                 # Role management
-├── session/              # Session management
-├── shared/               # Shared utilities
-│   ├── configs/          # Winston logger config
-│   ├── dto/              # Shared DTOs (Pagination)
-│   ├── filters/          # Exception filters (Prisma)
-│   ├── interceptors/     # Logging interceptor
-│   ├── middlewares/      # Security middleware
-│   └── services/         # Prisma service
-└── main.ts               # Application entry point
+├── db/                       # Liquibase database migrations
+│   ├── migration-scripts/    # Individual migration XML files
+│   │   ├── 001-create-user-table.xml
+│   │   ├── 002-create-role-table.xml
+│   │   ├── 003-create-session-table.xml
+│   │   ├── 004-seed-role-data.xml
+│   │   └── ...
+│   ├── db.changelog-master.xml  # Main changelog file
+│   ├── liquibase-update.js      # Migration runner script
+│   └── liquibase-rollback.js    # Rollback script
+├── prisma/
+│   └── schema.prisma         # Prisma ORM schema (synced from DB)
+├── src/
+│   ├── auth/                 # Authentication & Authorization
+│   │   ├── decorators/       # Custom decorators (Public, Roles, CurrentUser)
+│   │   ├── dto/              # Data Transfer Objects
+│   │   ├── guards/           # Auth guards (JWT, Roles, Throttle)
+│   │   ├── strategies/       # Passport strategies (JWT, Google)
+│   │   └── tasks/            # Scheduled tasks (session cleanup)
+│   ├── user/                 # User management
+│   │   ├── dto/              # User DTOs
+│   │   ├── selects/          # Prisma select queries
+│   │   └── utils/            # User transformation utilities
+│   ├── role/                 # Role management
+│   ├── session/              # Session management
+│   ├── shared/               # Shared utilities
+│   │   ├── configs/          # Winston logger config
+│   │   ├── dto/              # Shared DTOs (Pagination)
+│   │   ├── filters/          # Exception filters (Prisma)
+│   │   ├── interceptors/     # Logging interceptor
+│   │   ├── middlewares/      # Security middleware
+│   │   └── services/         # Prisma service
+│   └── main.ts               # Application entry point
+└── generated/
+    └── prisma/               # Auto-generated Prisma Client
 ```
 
 ## 📦 API Endpoints
@@ -226,29 +255,103 @@ See `.env.example` for a complete list of configuration options.
 
 ### Database Configuration
 
-The application uses Prisma for database management. The schema is located in `prisma/schema.prisma`.
+This project uses a **dual approach** for database management:
 
-**Useful Prisma Commands:**
+#### Liquibase (Migrations & Seeding)
+- **Purpose**: Database schema creation, migrations, and data seeding
+- **Location**: `db/` directory
+- **Changelog**: `db/db.changelog-master.xml`
+- **Migration Scripts**: `db/migration-scripts/`
+
+**Liquibase Commands:**
 
 ```bash
-# Generate Prisma Client
+# Run all migrations (development)
+npm run liquibase:update-dev
+
+# Run all migrations (production)
+npm run liquibase:update-prod
+
+# Rollback last changeset (development)
+npm run liquibase:rollback-dev
+
+# Rollback last changeset (production)
+npm run liquibase:rollback-prod
+```
+
+**Creating New Migrations:**
+1. Create new XML file in `db/migration-scripts/` (e.g., `009-your-migration.xml`)
+2. Add reference in `db/db.changelog-master.xml`
+3. Run `npm run liquibase:update-dev`
+
+#### Prisma (ORM)
+- **Purpose**: Type-safe database access in application code
+- **Location**: `prisma/schema.prisma`
+- **Generated Client**: `generated/prisma/`
+
+**Prisma Commands:**
+
+```bash
+# Generate Prisma Client (after Liquibase migrations)
 npm run prisma:generate
 
-# Create a new migration
-npx prisma migrate dev --name your_migration_name
-
-# Apply migrations
-npx prisma migrate deploy
+# Pull schema from database to Prisma schema file
+npm run prisma:db-pull
 
 # Open Prisma Studio (database GUI)
 npx prisma studio
-
-# Pull schema from existing database
-npm run prisma:db-pull
-
-# Reset database (WARNING: deletes all data)
-npx prisma migrate reset
 ```
+
+**Important Notes:**
+- Use **Liquibase** to create/modify database schema
+- Use **Prisma** for querying data in your application code
+- After running Liquibase migrations, run `prisma:db-pull` to sync Prisma schema
+- Always generate Prisma Client after schema changes
+
+#### Database Workflow
+
+**When making schema changes:**
+
+1. **Create Liquibase Migration**
+   ```bash
+   # Create new migration file in db/migration-scripts/
+   # Example: 009-add-user-phone-field.xml
+   ```
+
+2. **Add to Changelog**
+   ```xml
+   <!-- db/db.changelog-master.xml -->
+   <include file="migration-scripts/009-add-user-phone-field.xml" />
+   ```
+
+3. **Run Migration**
+   ```bash
+   npm run liquibase:update-dev
+   ```
+
+4. **Sync Prisma Schema**
+   ```bash
+   npm run prisma:db-pull
+   ```
+
+5. **Generate Prisma Client**
+   ```bash
+   npm run prisma:generate
+   ```
+
+6. **Use in Code**
+   ```typescript
+   // Now you can use the new field with full TypeScript support
+   const user = await prisma.user.findUnique({
+     where: { id: userId },
+     select: { phone: true } // TypeScript knows about 'phone'
+   });
+   ```
+
+**Why This Approach?**
+- **Liquibase**: Version control for database, handles complex migrations, rollbacks
+- **Prisma**: Type-safe queries, excellent DX, auto-completion in IDE
+- **Best of Both**: Database versioning + developer experience
 
 ### Security Configuration
 
@@ -281,11 +384,14 @@ npx prisma migrate reset
 # Install dependencies
 npm ci --only=production
 
-# Generate Prisma Client
-npm run prisma:generate
+# Run Liquibase migrations (creates tables and seeds data)
+npm run liquibase:update-prod
 
-# Run database migrations
-npx prisma migrate deploy
+# Pull database schema to Prisma
+npm run prisma:db-pull
+
+# Generate Prisma Client for type-safe database access
+npm run prisma:generate
 
 # Build the application
 npm run build
