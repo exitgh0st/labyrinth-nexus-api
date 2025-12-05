@@ -23,7 +23,7 @@ export class RoleService {
     const [data, total] = await Promise.all([
       this.prisma.role.findMany({
         skip,
-        take,
+        ...(take > 0 && { take }), // Only apply take if > 0, otherwise return all
         where,
         orderBy: { createdAt: 'desc' },
       }),

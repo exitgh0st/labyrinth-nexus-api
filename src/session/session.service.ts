@@ -37,29 +37,35 @@ export class SessionService {
         return this.transformSession(session);
     }
 
-    async findAll(params?: FindAllSessionsDto): Promise<SafeSession[]> {
-        const { skip = 0, take = 10, userId: user_id, isRevoked: is_revoked, includeExpired: include_expired } = params || {};
+    async findAll(params?: FindAllSessionsDto): Promise<{ data: SafeSession[]; total: number }> {
+        const { skip = 0, take = 10, userId, isRevoked, includeExpired } = params || {};
+
+        console.log(params);
 
         // use camelCase keys for Prisma fields
         const where: Prisma.SessionWhereInput = {
-            ...(user_id && { userId: user_id }),
-            ...(is_revoked !== undefined && { isRevoked: is_revoked }),
-            ...(!include_expired && {
+            ...(userId && { userId }),
+            ...(isRevoked !== undefined && { isRevoked }),
+            ...(!includeExpired && {
                 expiresAt: { gte: new Date() },
             }),
         };
 
-        const sessions = await this.prisma.session.findMany({
-            skip,
-            take,
-            where,
-            select: safeSessionSelect,
-            orderBy: { createdAt: 'desc' },
-        });
 
-        const safeSessions = sessions.map(session => this.transformSession(session));
+        const [sessions, total] = await Promise.all([
+            this.prisma.session.findMany({
+                skip,
+                ...(take > 0 && { take }), // Only apply take if > 0, otherwise return all
+                where,
+                select: safeSessionSelect,
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.session.count({ where }),
+        ]);
 
-        return safeSessions;
+        const data = sessions.map(session => this.transformSession(session));
+
+        return { data, total };
     }
 
     async findById(id: number): Promise<SafeSession | null> {
@@ -118,24 +124,29 @@ export class SessionService {
         return safeSessions;
     }
 
-    async revokeSession(id: number): Promise<void> {
-        await this.prisma.session.update({
+    async revokeSession(id: number): Promise<SafeSession> {
+        const session = await this.prisma.session.update({
             where: { id },
             data: {
                 isRevoked: true,
                 updatedAt: new Date(),
             },
+            select: safeSessionSelect,
         });
+
+        return this.transformSession(session);
     }
 
-    async revokeAllUserSessions(userId: string): Promise<void> {
-        await this.prisma.session.updateMany({
+    async revokeAllUserSessions(userId: string): Promise<{ count: number }> {
+        const result = await this.prisma.session.updateMany({
             where: { userId: userId, isRevoked: false },
             data: {
                 isRevoked: true,
                 updatedAt: new Date(),
             },
         });
+
+        return { count: result.count };
     }
 
     async updateLastUsed(id: number): Promise<void> {
@@ -156,18 +167,18 @@ export class SessionService {
     /**
      * Clean up expired sessions (run as a cron job)
      */
-    async cleanupExpiredSessions(): Promise<number> {
+    async cleanupExpiredSessions(): Promise<{ count: number }> {
         const now = new Date();
         const result = await this.prisma.session.deleteMany({
             where: { expiresAt: { lt: now } },
         });
-        return result.count;
+        return { count: result.count };
     }
 
     /**
      * Clean up old revoked sessions (run as a cron job)
      */
-    async cleanupRevokedSessions(daysOld: number): Promise<number> {
+    async cleanupRevokedSessions(daysOld: number): Promise<{ count: number }> {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
@@ -177,6 +188,6 @@ export class SessionService {
                 updatedAt: { lt: cutoffDate },
             },
         });
-        return result.count;
+        return { count: result.count };
     }
 }
