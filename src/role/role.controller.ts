@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -11,6 +23,7 @@ export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @Roles('ADMIN')
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.roleService.create(createRoleDto);
@@ -24,19 +37,20 @@ export class RoleController {
 
   @Get(':id')
   @Roles('ADMIN')
-  findOne(@Param('id') id: string) {
-    return this.roleService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.roleService.findOne(id);
   }
 
   @Patch(':id')
   @Roles('ADMIN')
-  update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return this.roleService.update(+id, updateRoleDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateRoleDto: UpdateRoleDto) {
+    return this.roleService.update(id, updateRoleDto);
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Roles('ADMIN')
-  remove(@Param('id') id: string) {
-    return this.roleService.delete(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.roleService.delete(id);
   }
 }

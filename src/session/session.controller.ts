@@ -50,7 +50,8 @@ import {
   
     @Delete('cleanup/revoked')
     @HttpCode(HttpStatus.OK)
-    cleanupRevokedSessions(@Query('days', ParseIntPipe) days: number = 30) {
-      return this.sessionService.cleanupRevokedSessions(days);
+    cleanupRevokedSessions(@Query('days') days?: string) {
+      const daysToDelete = days ? parseInt(days, 10) : 30;
+      return this.sessionService.cleanupRevokedSessions(daysToDelete);
     }
   }
