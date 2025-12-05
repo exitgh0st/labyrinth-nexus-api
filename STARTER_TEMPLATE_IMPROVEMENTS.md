@@ -390,12 +390,14 @@ All `.spec.ts` files need actual tests or should be removed
 
 **Fix**: Either implement or document in README as "Not Yet Implemented Features"
 
-#### c. **Liquibase Scripts**
-The `db/` directory has Liquibase scripts but Prisma is being used. This is confusing.
+#### c. **Liquibase + Prisma Dual Approach** ✅
+~~The `db/` directory has Liquibase scripts but Prisma is being used. This is confusing.~~
 
-**Recommendation**:
-- Remove Liquibase if not needed
-- OR document why both exist
+**Status**: RESOLVED - Documented in README
+- **Liquibase**: Handles database migrations, schema creation, and data seeding
+- **Prisma**: Provides type-safe ORM for application code
+- This is an intentional architectural decision combining the best of both tools
+- Fully documented in README with workflow guide
 
 ---
 
@@ -644,7 +646,7 @@ Current `tsconfig.json` has relaxed settings:
 - [ ] Remove or implement TODO comments
 - [ ] Add Docker & docker-compose files
 - [ ] Remove logs/ and generated/ from git
-- [ ] Decide on Liquibase vs Prisma (remove one)
+- [x] ~~Decide on Liquibase vs Prisma~~ - Using both intentionally (documented)
 
 ### 🟢 Medium Priority
 - [ ] Add Swagger/OpenAPI documentation
