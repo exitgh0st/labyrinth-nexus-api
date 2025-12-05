@@ -1,98 +1,399 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS Prisma Auth Starter Template
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A production-ready NestJS starter template featuring JWT authentication, OAuth integration, role-based access control, and comprehensive security features.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Features
 
-## Description
+- **Authentication & Authorization**
+  - JWT-based authentication with access and refresh tokens
+  - Google OAuth 2.0 integration
+  - Role-Based Access Control (RBAC)
+  - Session management with revocation support
+  - Password reset functionality (ready to implement email)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Security**
+  - HTTP-only cookies for refresh tokens
+  - Rate limiting and throttling on sensitive endpoints
+  - Security headers (HSTS, CSP, XSS Protection)
+  - Bcrypt password hashing
+  - Account lockout after failed login attempts
 
-## Project setup
+- **Developer Experience**
+  - TypeScript with strict type checking
+  - Prisma ORM for type-safe database access
+  - Winston logger integration
+  - ESLint + Prettier for code quality
+  - Comprehensive error handling
+  - Global exception filters
 
-```bash
-$ npm install
-```
+- **API Features**
+  - Pagination support with `take=0` for unlimited results
+  - Consistent `{data, total}` response format
+  - Query parameter validation and transformation
+  - Structured error responses
 
-## Compile and run the project
+## 📋 Prerequisites
 
-```bash
-# development
-$ npm run start
+- **Node.js** 18+ and npm
+- **PostgreSQL** 14+
+- **Git**
 
-# watch mode
-$ npm run start:dev
+## 🛠️ Installation
 
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+### 1. Clone the repository
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+git clone https://github.com/yourusername/nestjs-prisma-auth-starter.git
+cd nestjs-prisma-auth-starter
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 2. Install dependencies
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 3. Set up environment variables
 
-## Resources
+```bash
+# Copy the example file
+cp .env.example .env.development.local
 
-Check out a few resources that may come in handy when working with NestJS:
+# Edit the file with your values
+# At minimum, update:
+# - DATABASE_URL
+# - JWT_SECRET (generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
+# - GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (if using OAuth)
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### 4. Set up the database
 
-## Support
+```bash
+# Create PostgreSQL database
+createdb your_database_name
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Run Prisma migrations
+npx prisma migrate dev
 
-## Stay in touch
+# Generate Prisma Client
+npm run prisma:generate
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Seed initial data (creates ADMIN and USER roles)
+npm run db:seed
+```
 
-## License
+### 5. Start the application
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+# Development mode (with hot reload)
+npm run start:dev
+
+# Production mode
+npm run build
+npm run start:prod
+```
+
+The API will be available at `http://localhost:3000/api`
+
+## 🔐 Authentication Setup
+
+### Google OAuth Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to "APIs & Services" > "Credentials"
+4. Click "Create Credentials" > "OAuth 2.0 Client ID"
+5. Configure the OAuth consent screen
+6. Set authorized redirect URI: `http://localhost:3000/api/auth/oauth/google/callback`
+7. Copy the Client ID and Client Secret to your `.env.development.local`
+
+### Generating a Secure JWT Secret
+
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+### Default Roles
+
+The system comes with two predefined roles (created via seed script):
+- **ADMIN** - Full access to all endpoints
+- **USER** - Standard user access
+
+## 📁 Project Structure
+
+```
+src/
+├── auth/                 # Authentication & Authorization
+│   ├── decorators/       # Custom decorators (Public, Roles, CurrentUser)
+│   ├── dto/              # Data Transfer Objects
+│   ├── guards/           # Auth guards (JWT, Roles, Throttle)
+│   ├── strategies/       # Passport strategies (JWT, Google)
+│   └── tasks/            # Scheduled tasks (session cleanup)
+├── user/                 # User management
+│   ├── dto/              # User DTOs
+│   ├── selects/          # Prisma select queries
+│   └── utils/            # User transformation utilities
+├── role/                 # Role management
+├── session/              # Session management
+├── shared/               # Shared utilities
+│   ├── configs/          # Winston logger config
+│   ├── dto/              # Shared DTOs (Pagination)
+│   ├── filters/          # Exception filters (Prisma)
+│   ├── interceptors/     # Logging interceptor
+│   ├── middlewares/      # Security middleware
+│   └── services/         # Prisma service
+└── main.ts               # Application entry point
+```
+
+## 📦 API Endpoints
+
+### Authentication Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/auth/register` | Register new user | No |
+| POST | `/api/auth/login` | Login with email/password | No |
+| POST | `/api/auth/refresh` | Refresh access token | No (requires refresh token cookie) |
+| POST | `/api/auth/logout` | Logout and invalidate session | Yes |
+| POST | `/api/auth/logout-all` | Logout from all devices | Yes |
+| GET | `/api/auth/oauth/google` | Initiate Google OAuth | No |
+| GET | `/api/auth/oauth/google/callback` | Google OAuth callback | No |
+| GET | `/api/auth/me` | Get current user info | Yes |
+
+### User Endpoints
+
+| Method | Endpoint | Description | Auth Required | Roles |
+|--------|----------|-------------|---------------|-------|
+| GET | `/api/users` | Get all users with pagination | Yes | ADMIN, USER |
+| GET | `/api/users/:id` | Get user by ID | Yes | ADMIN, USER |
+| PATCH | `/api/users/:id` | Update user | Yes | ADMIN, or own profile |
+| PATCH | `/api/users/:id/password` | Update password | Yes | ADMIN, or own password |
+| DELETE | `/api/users/:id` | Delete user | Yes | ADMIN |
+
+**Query Parameters for GET /api/users:**
+- `skip` (number): Number of records to skip (default: 0)
+- `take` (number): Number of records to return (default: 10, max: 100, 0 = all)
+- `role` (string): Filter by role name
+- `isActive` (boolean): Filter by active status
+
+### Role Endpoints
+
+| Method | Endpoint | Description | Auth Required | Roles |
+|--------|----------|-------------|---------------|-------|
+| GET | `/api/roles` | Get all roles | Yes | ADMIN |
+| GET | `/api/roles/:id` | Get role by ID | Yes | ADMIN |
+| POST | `/api/roles` | Create new role | Yes | ADMIN |
+| PATCH | `/api/roles/:id` | Update role | Yes | ADMIN |
+| DELETE | `/api/roles/:id` | Delete role | Yes | ADMIN |
+
+### Session Endpoints
+
+| Method | Endpoint | Description | Auth Required | Roles |
+|--------|----------|-------------|---------------|-------|
+| GET | `/api/sessions` | Get all sessions | Yes | ADMIN |
+| PATCH | `/api/sessions/:id/revoke` | Revoke a session | Yes | ADMIN |
+| PATCH | `/api/sessions/user/:userId/revoke-all` | Revoke all user sessions | Yes | ADMIN |
+| DELETE | `/api/sessions/:id` | Delete a session | Yes | ADMIN |
+| DELETE | `/api/sessions/cleanup/expired` | Cleanup expired sessions | Yes | ADMIN |
+| DELETE | `/api/sessions/cleanup/revoked` | Cleanup old revoked sessions | Yes | ADMIN |
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+
+# Watch mode
+npm run test:watch
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+The application uses environment-specific `.env` files:
+- `.env.development.local` - Development environment
+- `.env.production.local` - Production environment
+- `.env.example` - Template with all required variables
+
+See `.env.example` for a complete list of configuration options.
+
+### Database Configuration
+
+The application uses Prisma for database management. The schema is located in `prisma/schema.prisma`.
+
+**Useful Prisma Commands:**
+
+```bash
+# Generate Prisma Client
+npm run prisma:generate
+
+# Create a new migration
+npx prisma migrate dev --name your_migration_name
+
+# Apply migrations
+npx prisma migrate deploy
+
+# Open Prisma Studio (database GUI)
+npx prisma studio
+
+# Pull schema from existing database
+npm run prisma:db-pull
+
+# Reset database (WARNING: deletes all data)
+npx prisma migrate reset
+```
+
+### Security Configuration
+
+**Rate Limiting:**
+- Registration: 3 attempts per minute
+- Login: 5 attempts per minute
+- Default: 10 requests per 60 seconds
+
+**JWT Configuration:**
+- Access Token: 15 minutes expiry
+- Refresh Token: 7 days expiry
+- Tokens stored in HTTP-only cookies
+
+**Account Lockout:**
+- Locks after 5 failed login attempts
+- Lockout duration: configurable via database
+
+## 🚀 Deployment
+
+### Environment Preparation
+
+1. Set `NODE_ENV=production`
+2. Create `.env.production.local` with production values
+3. Ensure PostgreSQL database is accessible
+4. Set secure, random `JWT_SECRET`
+
+### Build and Deploy
+
+```bash
+# Install dependencies
+npm ci --only=production
+
+# Generate Prisma Client
+npm run prisma:generate
+
+# Run database migrations
+npx prisma migrate deploy
+
+# Build the application
+npm run build
+
+# Start production server
+npm run start:prod
+```
+
+### Using Docker (Optional)
+
+```bash
+# Build and start with Docker Compose
+docker-compose up -d
+
+# Stop services
+docker-compose down
+```
+
+### Recommended Production Setup
+
+- Use a process manager like **PM2**
+- Set up **NGINX** as reverse proxy
+- Enable **HTTPS** with Let's Encrypt
+- Configure **PostgreSQL** connection pooling
+- Set up log aggregation (e.g., ELK stack)
+- Enable monitoring (e.g., Prometheus + Grafana)
+
+## 📝 Common Tasks
+
+### Creating a New User Manually
+
+```typescript
+// Use Prisma Studio or SQL
+INSERT INTO "user" (email, password_hash, first_name, last_name, is_active)
+VALUES ('admin@example.com', '$2b$10$...', 'Admin', 'User', true);
+
+// Assign ADMIN role
+INSERT INTO "user_role" (user_id, role_id)
+VALUES ('user-uuid', 1); -- Assuming ADMIN role id is 1
+```
+
+### Revoking All Sessions for a User
+
+```bash
+# Via API (requires ADMIN role)
+PATCH /api/sessions/user/:userId/revoke-all
+```
+
+### Cleaning Up Old Sessions
+
+Sessions are automatically cleaned up via scheduled tasks, but you can manually trigger cleanup:
+
+```bash
+# Via API (requires ADMIN role)
+DELETE /api/sessions/cleanup/expired
+DELETE /api/sessions/cleanup/revoked?days=30
+```
+
+## 🛡️ Security Best Practices
+
+1. **Always use HTTPS in production**
+2. **Rotate JWT secrets regularly**
+3. **Keep dependencies updated**: `npm audit fix`
+4. **Use strong passwords** for database and admin accounts
+5. **Enable CORS** only for trusted origins
+6. **Monitor failed login attempts**
+7. **Regularly review and revoke old sessions**
+8. **Implement rate limiting** on all public endpoints
+9. **Use environment variables** for all secrets
+10. **Enable database backups**
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [NestJS](https://nestjs.com/) - Progressive Node.js framework
+- [Prisma](https://www.prisma.io/) - Next-generation ORM
+- [Passport](http://www.passportjs.org/) - Authentication middleware
+
+## 📞 Support
+
+For issues and questions:
+- Create an issue in this repository
+- Check existing issues for solutions
+- Review the NestJS and Prisma documentation
+
+## 🗺️ Roadmap
+
+- [ ] Email verification
+- [ ] Password reset via email
+- [ ] Two-factor authentication (2FA)
+- [ ] Swagger/OpenAPI documentation
+- [ ] Docker support
+- [ ] CI/CD pipeline
+- [ ] Comprehensive test coverage
+
+---
+
+Made with ❤️ using NestJS and Prisma
