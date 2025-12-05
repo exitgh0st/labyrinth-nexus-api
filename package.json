@@ -38,7 +38,12 @@
     "liquibase:rollback-dev": "set NODE_ENV=development&&cd db&&node db/liquibase-rollback.js",
     "liquibase:rollback-prod": "set NODE_ENV=production&&cd db&&node db/liquibase-rollback.js",
     "prisma:db-pull": "dotenv -e .env.development.local -- prisma db pull",
-    "prisma:generate": "npx prisma generate"
+    "prisma:generate": "npx prisma generate",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:dev": "docker-compose --profile dev up -d api-dev",
+    "docker:build": "docker-compose up -d --build"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

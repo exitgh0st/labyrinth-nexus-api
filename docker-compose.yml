@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: nestjs-starter-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: starter_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NestJS Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: nestjs-starter-api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      # Database
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/starter_db
+      JDBC_DATABASE_URL: jdbc:postgresql://postgres:5432/starter_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+
+      # Server
+      NODE_ENV: production
+      PORT: 3000
+      FRONTEND_URL: http://localhost:4200
+
+      # JWT - CHANGE THESE IN PRODUCTION!
+      JWT_SECRET: change-this-to-a-secure-random-string-min-64-chars
+      JWT_ACCESS_EXPIRY_MINS: 15
+      JWT_REFRESH_EXPIRY_DAYS: 7
+
+      # Cookies
+      COOKIE_MAX_AGE: 604800000
+      COOKIE_PATH: /api/auth
+
+      # Rate Limiting
+      THROTTLE_TTL: 60000
+      THROTTLE_LIMIT: 10
+
+      # Security
+      BCRYPT_ROUNDS: 10
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        echo 'Running Liquibase migrations...' &&
+        cd /app/db && node liquibase-update.js &&
+        cd /app &&
+        echo 'Generating Prisma Client...' &&
+        npx prisma generate &&
+        echo 'Starting application...' &&
+        node dist/main
+      "
+
+  # Development mode (with hot reload)
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: nestjs-starter-api-dev
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    environment:
+      # Database
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/starter_db
+      JDBC_DATABASE_URL: jdbc:postgresql://postgres:5432/starter_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+
+      # Server
+      NODE_ENV: development
+      PORT: 3000
+      FRONTEND_URL: http://localhost:4200
+
+      # JWT
+      JWT_SECRET: dev-secret-change-in-production
+      JWT_ACCESS_EXPIRY_MINS: 15
+      JWT_REFRESH_EXPIRY_DAYS: 7
+
+      # Cookies
+      COOKIE_MAX_AGE: 604800000
+      COOKIE_PATH: /api/auth
+
+      # Rate Limiting
+      THROTTLE_TTL: 60000
+      THROTTLE_LIMIT: 10
+
+      # Security
+      BCRYPT_ROUNDS: 10
+
+    volumes:
+      - ./src:/app/src
+      - ./db:/app/db
+      - ./prisma:/app/prisma
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run start:dev
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local

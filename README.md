@@ -110,6 +110,23 @@ npm run start:prod
 
 The API will be available at `http://localhost:3000/api`
 
+### Alternative: Quick Start with Docker 🐳
+
+If you have Docker installed, you can get started even faster:
+
+```bash
+# Start PostgreSQL + NestJS API
+npm run docker:up
+
+# View logs
+npm run docker:logs
+
+# Stop everything
+npm run docker:down
+```
+
+See [DOCKER.md](DOCKER.md) for complete Docker documentation.
+
 ## 🔐 Authentication Setup
 
 ### Google OAuth Setup
@@ -400,15 +417,25 @@ npm run build
 npm run start:prod
 ```
 
-### Using Docker (Optional)
+### Using Docker 🐳 (Recommended)
+
+Docker simplifies deployment and ensures consistency across environments.
 
 ```bash
-# Build and start with Docker Compose
-docker-compose up -d
+# Production mode
+npm run docker:up
+
+# View logs
+npm run docker:logs
 
 # Stop services
-docker-compose down
+npm run docker:down
+
+# Rebuild after changes
+npm run docker:build
 ```
+
+**For complete Docker documentation**, including development mode, troubleshooting, and cloud deployment, see [DOCKER.md](DOCKER.md).
 
 ### Recommended Production Setup
 
