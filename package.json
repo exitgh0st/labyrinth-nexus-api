@@ -2,12 +2,12 @@
   "name": "labyrinth-nexus-api",
   "version": "1.0.0",
   "description": "Labyrinth Nexus API - Production-ready NestJS application with Prisma, JWT auth, OAuth, RBAC, and session management",
-  "author": "Your Name <your.email@example.com>",
+  "author": "exitgh0st <dev.exitgh0st@gmail.com>",
   "private": true,
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/labyrinth-nexus-api"
+    "url": "https://github.com/exitgh0st/labyrinth-nexus-api"
   },
   "keywords": [
     "nestjs",

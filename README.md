@@ -47,7 +47,7 @@ A production-ready NestJS application featuring JWT authentication, OAuth integr
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/labyrinth-nexus-api.git
+git clone https://github.com/exitgh0st/labyrinth-nexus-api.git
 cd labyrinth-nexus-api
 ```
 
