@@ -7,6 +7,10 @@ import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { SecurityMiddleware } from './shared/middlewares/security.middleware';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import * as crypto from 'crypto';
+
+// Make crypto globally available for @nestjs/schedule
+(global as any).crypto = crypto;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

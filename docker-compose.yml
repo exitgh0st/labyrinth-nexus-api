@@ -30,6 +30,8 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
+    env_file:
+      - .env.development.local
     environment:
       # Database
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/starter_db
@@ -40,23 +42,6 @@ services:
       # Server
       NODE_ENV: production
       PORT: 3000
-      FRONTEND_URL: http://localhost:4200
-
-      # JWT - CHANGE THESE IN PRODUCTION!
-      JWT_SECRET: change-this-to-a-secure-random-string-min-64-chars
-      JWT_ACCESS_EXPIRY_MINS: 15
-      JWT_REFRESH_EXPIRY_DAYS: 7
-
-      # Cookies
-      COOKIE_MAX_AGE: 604800000
-      COOKIE_PATH: /api/auth
-
-      # Rate Limiting
-      THROTTLE_TTL: 60000
-      THROTTLE_LIMIT: 10
-
-      # Security
-      BCRYPT_ROUNDS: 10
 
     depends_on:
       postgres:
@@ -84,6 +69,8 @@ services:
     restart: unless-stopped
     ports:
       - '3001:3000'
+    env_file:
+      - .env.development.local
     environment:
       # Database
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/starter_db
@@ -94,23 +81,6 @@ services:
       # Server
       NODE_ENV: development
       PORT: 3000
-      FRONTEND_URL: http://localhost:4200
-
-      # JWT
-      JWT_SECRET: dev-secret-change-in-production
-      JWT_ACCESS_EXPIRY_MINS: 15
-      JWT_REFRESH_EXPIRY_DAYS: 7
-
-      # Cookies
-      COOKIE_MAX_AGE: 604800000
-      COOKIE_PATH: /api/auth
-
-      # Rate Limiting
-      THROTTLE_TTL: 60000
-      THROTTLE_LIMIT: 10
-
-      # Security
-      BCRYPT_ROUNDS: 10
 
     volumes:
       - ./src:/app/src
