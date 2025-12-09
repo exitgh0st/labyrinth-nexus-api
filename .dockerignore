@@ -53,5 +53,3 @@ docker-compose.yml
 .prettierrc
 .eslintrc.js
 eslint.config.mjs
-tsconfig.json
-tsconfig.build.json

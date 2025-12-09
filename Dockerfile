@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies for building)
-RUN npm ci
+RUN npm install
 
 # Copy prisma schema for generation
 COPY prisma ./prisma/
@@ -27,8 +27,8 @@ RUN npm run build
 # Stage 2: Production stage
 FROM node:18-alpine AS production
 
-# Install Liquibase (for migrations)
-RUN apk add --no-cache openjdk11-jre-headless curl && \
+# Install Liquibase (for migrations) and bash
+RUN apk add --no-cache bash openjdk11-jre-headless curl && \
     curl -L https://github.com/liquibase/liquibase/releases/download/v4.24.0/liquibase-4.24.0.tar.gz | tar xzf - -C /opt && \
     ln -s /opt/liquibase /usr/local/bin/liquibase
 
@@ -39,7 +39,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ONLY production dependencies
-RUN npm ci --only=production
+RUN npm install --only=production
 
 # Copy Prisma schema and db migrations
 COPY prisma ./prisma/
