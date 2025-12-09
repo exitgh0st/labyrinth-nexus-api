@@ -1,13 +1,13 @@
 {
-  "name": "nestjs-prisma-auth-starter",
+  "name": "labyrinth-nexus-api",
   "version": "1.0.0",
-  "description": "Production-ready NestJS starter template with Prisma, JWT auth, OAuth, RBAC, and session management",
+  "description": "Labyrinth Nexus API - Production-ready NestJS application with Prisma, JWT auth, OAuth, RBAC, and session management",
   "author": "Your Name <your.email@example.com>",
-  "private": false,
+  "private": true,
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/nestjs-prisma-auth-starter"
+    "url": "https://github.com/yourusername/labyrinth-nexus-api"
   },
   "keywords": [
     "nestjs",

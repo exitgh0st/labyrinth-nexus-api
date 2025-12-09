@@ -127,13 +127,13 @@ npm run docker:down
 **Build and deploy:**
 ```bash
 # Build the Docker image
-docker build -t nestjs-starter:1.0 .
+docker build -t labyrinth-nexus-api:1.0 .
 
 # Run it anywhere
 docker run -p 3000:3000 \
   -e DATABASE_URL=postgres://... \
   -e JWT_SECRET=... \
-  nestjs-starter:1.0
+  labyrinth-nexus-api:1.0
 ```
 
 ## Real-World Examples

@@ -1,6 +1,6 @@
-# NestJS Prisma Auth Starter Template
+# Labyrinth Nexus API
 
-A production-ready NestJS starter template featuring JWT authentication, OAuth integration, role-based access control, and comprehensive security features.
+A production-ready NestJS application featuring JWT authentication, OAuth integration, role-based access control, and comprehensive security features.
 
 ## 🚀 Features
 
@@ -47,8 +47,8 @@ A production-ready NestJS starter template featuring JWT authentication, OAuth i
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/nestjs-prisma-auth-starter.git
-cd nestjs-prisma-auth-starter
+git clone https://github.com/yourusername/labyrinth-nexus-api.git
+cd labyrinth-nexus-api
 ```
 
 ### 2. Install dependencies

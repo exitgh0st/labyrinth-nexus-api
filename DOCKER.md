@@ -1,6 +1,6 @@
 # 🐳 Docker Setup Guide
 
-This guide explains how to use Docker with this NestJS starter template.
+This guide explains how to use Docker with Labyrinth Nexus API.
 
 ## 📋 What's Included
 
@@ -252,24 +252,24 @@ docker-compose exec -u root api sh
 
 ```bash
 # Build image
-docker build -t nestjs-starter:latest .
+docker build -t labyrinth-nexus-api:latest .
 
 # Run container
 docker run -d \
   -p 3000:3000 \
   -e DATABASE_URL=postgresql://user:pass@host:5432/db \
   -e JWT_SECRET=your-secret \
-  nestjs-starter:latest
+  labyrinth-nexus-api:latest
 ```
 
 ### Push to Docker Hub
 
 ```bash
 # Tag image
-docker tag nestjs-starter:latest yourusername/nestjs-starter:latest
+docker tag labyrinth-nexus-api:latest yourusername/labyrinth-nexus-api:latest
 
 # Push to Docker Hub
-docker push yourusername/nestjs-starter:latest
+docker push yourusername/labyrinth-nexus-api:latest
 ```
 
 ### Deploy to Cloud
@@ -308,7 +308,7 @@ The multi-stage build keeps images small:
 4. **Run as non-root** (already configured)
 5. **Scan images** for vulnerabilities:
    ```bash
-   docker scan nestjs-starter:latest
+   docker scan labyrinth-nexus-api:latest
    ```
 
 ## 💡 Tips
