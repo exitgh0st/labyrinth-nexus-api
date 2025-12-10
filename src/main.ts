@@ -7,29 +7,33 @@ import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { SecurityMiddleware } from './shared/middlewares/security.middleware';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import * as crypto from 'crypto';
 
-// Make crypto globally available for @nestjs/schedule
-(global as any).crypto = crypto;
+// Note: crypto is already globally available in Node.js 20+
+// No need to manually assign it to global
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true, // Buffer logs until logger is ready
   });
-  
+
   // Use Winston logger from the app context
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
-  
+
   const configService = app.get(ConfigService);
   app.useGlobalFilters(new PrismaExceptionFilter());
-  app.useGlobalPipes(new ValidationPipe({transform: true}));
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.setGlobalPrefix('api');
   app.use(new SecurityMiddleware().use);
 
   app.use(cookieParser());
 
+  const frontendUrls = configService
+    .get<string>('FRONTEND_URL', 'http://localhost:4200')
+    .split(',')
+    .map(url => url.trim()); // trim whitespace
+
   app.enableCors({
-    origin: configService.get<string>('FRONTEND_URL', 'http://localhost:4200'),
+    origin: frontendUrls,
     credentials: true,
   });
 

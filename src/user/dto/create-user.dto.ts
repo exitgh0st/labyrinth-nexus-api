@@ -1,7 +1,7 @@
-import { IsString, IsBoolean, IsOptional, IsEmail, IsNumber, IsArray, IsInt } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsEmail, IsNumber, IsArray, IsInt, MinLength, IsNotEmpty } from 'class-validator';
 import { UpdatePasswordDto } from './update-user-password.dto';
 
-export class CreateUserDto extends UpdatePasswordDto {
+export class CreateUserDto {
   @IsEmail()
   email: string;
 
@@ -28,4 +28,9 @@ export class CreateUserDto extends UpdatePasswordDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(4)
+  password: string;
 }

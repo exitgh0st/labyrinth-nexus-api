@@ -1,7 +1,10 @@
 # Multi-stage build for optimal image size
 
 # Stage 1: Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
+
+# Install OpenSSL (required for Prisma on Alpine)
+RUN apk add --no-cache openssl
 
 # Set working directory
 WORKDIR /app
@@ -10,7 +13,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies for building)
-RUN npm install
+RUN npm ci
 
 # Copy prisma schema for generation
 COPY prisma ./prisma/
@@ -25,10 +28,10 @@ RUN npm run prisma:generate
 RUN npm run build
 
 # Stage 2: Production stage
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
-# Install Liquibase (for migrations) and bash
-RUN apk add --no-cache bash openjdk11-jre-headless curl && \
+# Install OpenSSL, Liquibase (for migrations) and bash
+RUN apk add --no-cache bash openssl openjdk11-jre-headless curl && \
     curl -L https://github.com/liquibase/liquibase/releases/download/v4.24.0/liquibase-4.24.0.tar.gz | tar xzf - -C /opt && \
     ln -s /opt/liquibase /usr/local/bin/liquibase
 
@@ -39,7 +42,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ONLY production dependencies
-RUN npm install --only=production
+RUN npm ci --only=production
 
 # Copy Prisma schema and db migrations
 COPY prisma ./prisma/
