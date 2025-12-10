@@ -1,6 +1,48 @@
-# Labyrinth Nexus API
+# NestJS Starter Template with Authentication & RBAC
 
-A production-ready NestJS application featuring JWT authentication, OAuth integration, role-based access control, and comprehensive security features.
+A production-ready NestJS starter template featuring JWT authentication, OAuth integration, role-based access control, and comprehensive security features. Perfect for kickstarting your next API project.
+
+## 📖 Using This Starter Template
+
+This is a starter template, not a ready-to-use application. Follow the **Project Setup & Customization** section below to personalize it for your project.
+
+### Quick Start Checklist
+
+- [ ] Update `package.json` with your project name and info
+- [ ] Update `docker-compose.yml` container names
+- [ ] Create `.env.development.local` from `.env.example`
+- [ ] Generate a secure JWT secret
+- [ ] Update database credentials
+- [ ] (Optional) Set up Google OAuth credentials
+- [ ] Run database migrations
+- [ ] Start the application
+
+### TL;DR - Get Started in 5 Minutes
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/exitgh0st/labyrinth-nexus-api.git your-project
+cd your-project
+
+# 2. Copy environment file
+cp .env.example .env.development.local
+
+# 3. Generate JWT secret and update .env.development.local
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# 4. Install dependencies
+npm install
+
+# 5. Start with Docker (easiest)
+npm run docker:up
+
+# Or without Docker:
+# - Install PostgreSQL and Liquibase
+# - Update DATABASE_URL in .env.development.local
+# - Run: npm run liquibase:update-dev && npm run prisma:generate && npm run start:dev
+```
+
+**Important:** Don't forget to customize `package.json`, `docker-compose.yml`, and `README.md` with your project details!
 
 ## 🚀 Features
 
@@ -42,35 +84,199 @@ A production-ready NestJS application featuring JWT authentication, OAuth integr
   - Or use Docker: `docker pull liquibase/liquibase`
 - **Git**
 
-## 🛠️ Installation
+## 🎯 Project Setup & Customization
 
-### 1. Clone the repository
+Follow these steps to personalize this starter template for your project:
+
+### Quick Reference: Files to Customize
+
+| File | What to Update | Priority |
+|------|---------------|----------|
+| `package.json` | Project name, description, author, repository URL | **Required** |
+| `docker-compose.yml` | Container names (3 places) | **Required** |
+| `.env.development.local` | Database credentials, JWT secret, API keys | **Required** |
+| `README.md` | Project title, description, and documentation | **Required** |
+| `db/migration-scripts/004-seed-role-data.xml` | Default roles | Optional |
+| `db/migration-scripts/005-seed-user-data.xml` | Admin user credentials | Optional |
+| `db/migration-scripts/007-seed-user-role-data.xml` | User-role assignments | Optional |
+
+### Step 1: Clone or Fork the Repository
 
 ```bash
+# Option A: Clone directly
 git clone https://github.com/exitgh0st/labyrinth-nexus-api.git
 cd labyrinth-nexus-api
+
+# Option B: Fork on GitHub, then clone your fork
+git clone https://github.com/YOUR-USERNAME/your-project-name.git
+cd your-project-name
 ```
 
-### 2. Install dependencies
+### Step 2: Rename Your Project
+
+Update the following files with your project information:
+
+#### 2.1. Update `package.json`
+
+```json
+{
+  "name": "your-project-name",
+  "version": "1.0.0",
+  "description": "Your project description",
+  "author": "Your Name <your.email@example.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR-USERNAME/your-project-name"
+  },
+  "keywords": [
+    "nestjs",
+    "your-custom-keywords"
+  ]
+}
+```
+
+#### 2.2. Update `docker-compose.yml`
+
+Replace container names with your project name:
+
+```yaml
+services:
+  postgres:
+    container_name: your-project-db  # Line 7
+
+  api:
+    container_name: your-project-api  # Line 29
+
+  api-dev:
+    container_name: your-project-api-dev  # Line 68
+```
+
+#### 2.3. Update `README.md`
+
+Replace the title and description at the top of this file:
+
+```markdown
+# Your Project Name
+
+Your project description goes here.
+```
+
+### Step 3: Configure Environment Variables
+
+```bash
+# Copy the example environment file
+cp .env.example .env.development.local
+
+# Edit with your preferred text editor
+# Windows: notepad .env.development.local
+# Mac/Linux: nano .env.development.local
+```
+
+Update the following critical values:
+
+#### 3.1. Database Configuration
+
+```bash
+# Change these to your database name and credentials
+DB_USER=postgres
+DB_PASSWORD=your_secure_password_here
+DATABASE_URL=postgresql://postgres:your_secure_password_here@localhost:5432/your_database_name
+JDBC_DATABASE_URL=jdbc:postgresql://localhost:5432/your_database_name
+```
+
+#### 3.2. JWT Secret (CRITICAL!)
+
+Generate a secure JWT secret:
+
+```bash
+# Run this command and copy the output
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+Then paste it in your `.env.development.local`:
+
+```bash
+JWT_SECRET=your_generated_secret_here
+```
+
+#### 3.3. Frontend URL
+
+```bash
+# Update to match your frontend application URL
+FRONTEND_URL=http://localhost:4200
+# Or for multiple origins (comma-separated):
+# FRONTEND_URL=http://localhost:4200,http://localhost:3001
+```
+
+#### 3.4. Google OAuth (Optional)
+
+If you want to use Google OAuth:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Set authorized redirect URI: `http://localhost:3000/api/auth/oauth/google/callback`
+6. Update your `.env.development.local`:
+
+```bash
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/oauth/google/callback
+```
+
+### Step 4: Initialize Git for Your Project
+
+```bash
+# Remove the existing git history (optional)
+rm -rf .git  # On Mac/Linux
+# Or on Windows:
+rmdir /s .git
+
+# Initialize a new git repository
+git init
+git add .
+git commit -m "Initial commit from NestJS starter template"
+
+# Connect to your remote repository
+git remote add origin https://github.com/YOUR-USERNAME/your-project-name.git
+git branch -M main
+git push -u origin main
+```
+
+### Step 5: Customize Database Seeds (Optional)
+
+If you want to customize the initial data:
+
+1. **Roles**: Edit `db/migration-scripts/004-seed-role-data.xml`
+2. **Admin User**: Edit `db/migration-scripts/005-seed-user-data.xml`
+3. **User Roles**: Edit `db/migration-scripts/007-seed-user-role-data.xml`
+
+### Step 6: Clean Up Template Files (Optional)
+
+Remove template-specific documentation files that you don't need:
+
+```bash
+# Remove these files if you don't need them
+rm CRITICAL_FIXES_COMPLETED.md
+rm STARTER_TEMPLATE_IMPROVEMENTS.md
+rm DEVELOPER_GUIDE.md
+rm DOCKER_EXPLAINED.md
+
+# Keep DOCKER.md if you plan to use Docker
+```
+
+## 🛠️ Installation
+
+Once you've completed the **Project Setup & Customization** steps above, follow these installation steps:
+
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Set up environment variables
-
-```bash
-# Copy the example file
-cp .env.example .env.development.local
-
-# Edit the file with your values
-# At minimum, update:
-# - DATABASE_URL
-# - JWT_SECRET (generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
-# - GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (if using OAuth)
-```
-
-### 4. Set up the database
+### 2. Set up the database
 
 This project uses **Liquibase** for database migrations and seeding, and **Prisma** as the ORM.
 
@@ -97,7 +303,7 @@ npm run prisma:db-pull
 - Initial ADMIN and USER role seeding
 - Sample admin user creation
 
-### 5. Start the application
+### 3. Start the application
 
 ```bash
 # Development mode (with hot reload)
@@ -127,29 +333,73 @@ npm run docker:down
 
 See [DOCKER.md](DOCKER.md) for complete Docker documentation.
 
-## 🔐 Authentication Setup
+## 🎓 What to Do After Setup
 
-### Google OAuth Setup
+Once your application is running, here are some suggested next steps:
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Navigate to "APIs & Services" > "Credentials"
-4. Click "Create Credentials" > "OAuth 2.0 Client ID"
-5. Configure the OAuth consent screen
-6. Set authorized redirect URI: `http://localhost:3000/api/auth/oauth/google/callback`
-7. Copy the Client ID and Client Secret to your `.env.development.local`
+### 1. Test the Authentication
 
-### Generating a Secure JWT Secret
+Try registering a new user:
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "SecurePass123!",
+    "firstName": "Test",
+    "lastName": "User"
+  }'
 ```
 
-### Default Roles
+### 2. Understand the Project Structure
+
+Explore the `src/` directory to understand how modules are organized:
+- `auth/` - Authentication and authorization logic
+- `user/` - User management endpoints
+- `role/` - Role management endpoints
+- `session/` - Session management endpoints
+- `shared/` - Shared utilities, filters, and middleware
+
+### 3. Add Your First Feature
+
+Create a new module for your domain:
+
+```bash
+# Generate a new resource (controller + service + module)
+npx nest generate resource products
+
+# Or manually create a module
+npx nest generate module products
+npx nest generate controller products
+npx nest generate service products
+```
+
+### 4. Customize the Database
+
+Add new tables by creating Liquibase migration files in `db/migration-scripts/`. See existing files for examples.
+
+### 5. Update the API Endpoints
+
+Modify or add new endpoints based on your application requirements. The existing endpoints serve as examples of best practices.
+
+### 6. Configure for Production
+
+When ready to deploy:
+- Create `.env.production.local` with production values
+- Set `NODE_ENV=production`
+- Use strong, unique secrets
+- Enable HTTPS
+- Set up proper CORS origins
+- Review the **Deployment** section below
+
+## 🔐 Default Roles
 
 The system comes with two predefined roles (created via Liquibase seed scripts):
 - **ADMIN** - Full access to all endpoints
 - **USER** - Standard user access
+
+You can customize these roles or add new ones by editing the seed data in `db/migration-scripts/004-seed-role-data.xml`
 
 ## 📁 Project Structure
 
@@ -490,15 +740,53 @@ DELETE /api/sessions/cleanup/revoked?days=30
 9. **Use environment variables** for all secrets
 10. **Enable database backups**
 
+## ❓ Troubleshooting
+
+### Common Setup Issues
+
+**Issue: "Database connection failed"**
+- Verify PostgreSQL is running: `pg_isready`
+- Check DATABASE_URL in `.env.development.local`
+- Ensure database exists: `createdb your_database_name`
+
+**Issue: "JWT secret is not defined"**
+- Generate a JWT secret: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
+- Add it to `.env.development.local` as `JWT_SECRET=...`
+
+**Issue: "Liquibase migration failed"**
+- Ensure JDBC_DATABASE_URL is correct in your `.env` file
+- Check that Liquibase is installed: `liquibase --version`
+- Try running migrations manually: `cd db && node liquibase-update.js`
+
+**Issue: "Cannot find module '@prisma/client'"**
+- Run: `npm run prisma:generate`
+- If still failing: `npm install && npm run prisma:generate`
+
+**Issue: "Port 3000 is already in use"**
+- Change the PORT in your `.env.development.local`
+- Or kill the process using port 3000
+
+**Issue: Docker container won't start**
+- Check logs: `npm run docker:logs`
+- Ensure ports 3000 and 5432 are not in use
+- Try rebuilding: `npm run docker:build`
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
+This is a starter template, but contributions to improve the template are welcome:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+Please focus on improvements that benefit all users of the template, such as:
+- Bug fixes
+- Security improvements
+- Better documentation
+- Additional useful features
+- Performance optimizations
 
 ## 📄 License
 
@@ -512,21 +800,48 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For issues and questions:
-- Create an issue in this repository
-- Check existing issues for solutions
-- Review the NestJS and Prisma documentation
+### For Template Issues
 
-## 🗺️ Roadmap
+If you encounter issues with the starter template itself:
+- Check the **Troubleshooting** section above
+- Create an issue in the [original repository](https://github.com/exitgh0st/labyrinth-nexus-api)
+- Review existing issues for solutions
 
-- [ ] Email verification
+### For Your Project
+
+Once you've customized this template for your project:
+- Update this section with your own support information
+- Add links to your project's issue tracker
+- Include your team's contact information
+
+### Learning Resources
+
+- [NestJS Documentation](https://docs.nestjs.com/)
+- [Prisma Documentation](https://www.prisma.io/docs/)
+- [Liquibase Documentation](https://docs.liquibase.com/)
+- [Passport.js Documentation](http://www.passportjs.org/)
+
+## 🗺️ Template Roadmap
+
+Planned improvements for this starter template:
+
+- [ ] Email verification system
 - [ ] Password reset via email
 - [ ] Two-factor authentication (2FA)
 - [ ] Swagger/OpenAPI documentation
-- [ ] Docker support
-- [ ] CI/CD pipeline
-- [ ] Comprehensive test coverage
+- [x] Docker support
+- [ ] CI/CD pipeline examples (GitHub Actions, GitLab CI)
+- [ ] Comprehensive test examples
+- [ ] WebSocket support example
+- [ ] File upload example
+- [ ] Pagination helper improvements
+
+**Your Project Roadmap**: Replace this section with your own project roadmap after customization.
 
 ---
 
-Made with ❤️ using NestJS and Prisma
+**Built with:** NestJS • Prisma • PostgreSQL • JWT • OAuth 2.0
+
+**Template by:** [exitgh0st](https://github.com/exitgh0st)
+
+**License:** MIT - Free to use for personal and commercial projects
